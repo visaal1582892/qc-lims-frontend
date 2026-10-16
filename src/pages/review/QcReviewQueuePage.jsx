@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { reviewWorkflowApi } from '../../api/reviewWorkflowApi'
 import { DataTable } from '../../components/table/DataTable'
@@ -7,8 +7,8 @@ import { StatusBadge } from './components/StatusBadge'
 import { ExecutionStatusBadge } from '../testExecution/components/ExecutionStatusBadge'
 import { ComplianceBadge } from '../testExecution/components/ComplianceBadge'
 import { formatDateTime, formatDecimal } from '../../utils/formatters'
-import { ToastContainer, Toast } from '../../components/feedback/Toast'
-import { ShieldCheck, AlertTriangle } from 'lucide-react'
+import { ToastContainer } from '../../components/feedback/Toast'
+import { ShieldCheck } from 'lucide-react'
 
 /**
  * QC Review Queue Page — QC Head's pending reviews.
@@ -35,14 +35,21 @@ export function QcReviewQueuePage() {
       setLoading(true)
       const res = await reviewWorkflowApi.getQcReviewQueue()
       setItems(res.data.data || [])
-    } catch (err) {
+    } catch {
       addToast('Failed to load QC review queue', 'error')
     } finally {
       setLoading(false)
     }
   }, [addToast])
 
-  useEffect(() => { loadQueue() }, [loadQueue])
+  const loadedRef = useRef(false)
+
+  useEffect(() => {
+    if (!loadedRef.current) {
+      loadedRef.current = true
+      loadQueue()
+    }
+  }, [loadQueue])
 
   const handleOpenReview = (item) => {
     setSelectedItem(item)

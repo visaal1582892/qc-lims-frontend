@@ -29,3 +29,18 @@ export const ArStatus = {
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
 }
+
+// OOS Management (Phase 6) — SRS Module 8
+export const OosDisposition = {
+  PENDING: 'Pending',
+  RETEST_AUTHORIZED: 'Retest_Authorized',
+  RETEST_PASSED: 'Retest_Passed',
+  BATCH_REJECTED: 'Batch_Rejected',
+}
+
+export const OosStatus = {
+  PENDING: 'Pending',
+  INVESTIGATING: 'Investigating',
+  RESOLVED: 'Resolved',
+  ESCALATED: 'Escalated',
+}

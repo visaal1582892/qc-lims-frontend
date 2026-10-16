@@ -12,6 +12,11 @@ import { InventoryDetailPage } from './pages/inventory/InventoryDetailPage'
 import { InventoryVariancePage } from './pages/inventory/InventoryVariancePage'
 import { TestAllocationPage } from './pages/testExecution/TestAllocationPage'
 import { TestExecutionPage } from './pages/testExecution/TestExecutionPage'
+import { QcReviewQueuePage } from './pages/review/QcReviewQueuePage'
+import { QaReviewQueuePage } from './pages/review/QaReviewQueuePage'
+import { ReviewDetailPage } from './pages/review/ReviewDetailPage'
+import { OosIncidentsPage } from './pages/oos/OosIncidentsPage'
+import { TrialTestsPage } from './pages/trialTests/TrialTestsPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -71,6 +76,36 @@ function App() {
             <Route path={AppRoutes.TEST_EXECUTION} element={
               <ProtectedRoute>
                 <TestExecutionPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.QC_REVIEW_QUEUE} element={
+              <ProtectedRoute>
+                <QcReviewQueuePage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.QA_REVIEW_QUEUE} element={
+              <ProtectedRoute>
+                <QaReviewQueuePage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.REVIEW_DETAIL} element={
+              <ProtectedRoute>
+                <ReviewDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.OOS_INCIDENTS} element={
+              <ProtectedRoute>
+                <OosIncidentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.OOS_INCIDENT_DETAIL} element={
+              <ProtectedRoute>
+                <OosIncidentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TRIAL_TESTS} element={
+              <ProtectedRoute>
+                <TrialTestsPage />
               </ProtectedRoute>
             } />
           </Route>

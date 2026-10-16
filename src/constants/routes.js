@@ -24,4 +24,9 @@ export const Routes = {
   QA_REVIEW_QUEUE: '/review/qa-head',
   REVIEW_DETAIL: '/review/:executionId',
   REWORK_QUEUE: '/review/rework',
+
+  // OOS Management (Phase 6) — SRS Module 8
+  OOS_INCIDENTS: '/oos-incidents',
+  OOS_INCIDENT_DETAIL: '/oos-incidents/:id',
+  TRIAL_TESTS: '/trial-tests',
 }
