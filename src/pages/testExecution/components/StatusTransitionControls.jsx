@@ -12,21 +12,23 @@
  *
  * Uses semantic button styles from UI spec Section 6.1.
  */
-import { Play, PauseCircle, RotateCcw, Ban, Send, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Play, PauseCircle, RotateCcw, Ban, Send, CheckCircle, AlertTriangle, UserCog } from 'lucide-react'
 
 const transitions = {
   Allocated: [
     { label: 'Start Testing', action: 'start', icon: Play, variant: 'primary' },
     { label: 'Hold', action: 'hold', icon: PauseCircle, variant: 'warning' },
+    { label: 'Reassign', action: 'reassign', icon: UserCog, variant: 'warning' },
     { label: 'Cancel', action: 'cancel', icon: Ban, variant: 'destructive' },
   ],
   Testing: [
     { label: 'Hold', action: 'hold', icon: PauseCircle, variant: 'warning' },
     { label: 'Submit Result', action: 'submit', icon: Send, variant: 'success' },
+    { label: 'Reassign', action: 'reassign', icon: UserCog, variant: 'warning' },
     { label: 'Cancel', action: 'cancel', icon: Ban, variant: 'destructive' },
   ],
   Hold: [
-    { label: 'Resume', action: 'start', icon: Play, variant: 'primary' },
+    { label: 'Resume', action: 'resumeFromHold', icon: Play, variant: 'primary' },
     { label: 'Cancel', action: 'cancel', icon: Ban, variant: 'destructive' },
   ],
   Under_Review: [

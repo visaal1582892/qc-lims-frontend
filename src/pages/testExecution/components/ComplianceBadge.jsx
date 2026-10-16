@@ -20,7 +20,14 @@ const badgeStyles = {
 }
 
 export function ComplianceBadge({ flag }) {
-  if (!flag) return null
+  if (!flag) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ring-1 bg-slate-50 text-slate-400 ring-slate-200">
+        <Clock className="w-3 h-3" />
+        PENDING
+      </span>
+    )
+  }
 
   const config = badgeStyles[flag] || badgeStyles.PENDING
   const Icon = config.icon

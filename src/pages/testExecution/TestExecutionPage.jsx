@@ -91,6 +91,7 @@ export function TestExecutionPage() {
   const handleAction = useCallback((action, execution) => {
     switch (action) {
       case 'start':
+      case 'resumeFromHold':
         executeTransition(execution, async () => {
           await testExecutionApi.start(execution.executionId)
           showToast('Testing started.', 'success')
@@ -121,6 +122,7 @@ export function TestExecutionPage() {
         setReworkReasonOpen(true)
         break
       case 'resume':
+      case 'resumeFromHold':
         executeTransition(execution, async () => {
           await testExecutionApi.resume(execution.executionId)
           showToast('Testing resumed from rework.', 'success')

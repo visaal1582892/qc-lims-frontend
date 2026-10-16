@@ -45,6 +45,7 @@ export function TestAllocationPage() {
 
   const showToast = (message, type = 'info') => {
     setToast({ id: Date.now(), message, type })
+    setTimeout(() => setToast(null), 4000)
   }
 
   const handleAllocate = async (data) => {
@@ -60,7 +61,7 @@ export function TestAllocationPage() {
   }
 
   const handleAction = async (action, execution) => {
-    if (action === 'start') {
+    if (action === 'start' || action === 'resumeFromHold') {
       try {
         await testExecutionApi.start(execution.executionId)
         showToast('Testing started.', 'success')
