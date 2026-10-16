@@ -1,6 +1,3 @@
-import { FormInput } from '../../../components/form/FormInput'
-import { FormSelect } from '../../../components/form/FormSelect'
-
 /**
  * Filter bar component for Test Parameters list page.
  *

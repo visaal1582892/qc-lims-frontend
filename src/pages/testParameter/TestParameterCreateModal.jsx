@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Modal } from '../../components/feedback/Modal'
 import { FormInput } from '../../components/form/FormInput'
 import { FormSelect } from '../../components/form/FormSelect'
@@ -34,31 +34,27 @@ const emptyForm = {
 }
 
 export function TestParameterCreateModal({ open, onClose, mode = 'create', initialData, onSuccess, onToast }) {
-  const [form, setForm] = useState(emptyForm)
+  // Initialize form from initialData (update mode) or empty (create mode)
+  const getInitialForm = () => {
+    if (mode === 'update' && initialData) {
+      return {
+        productId: initialData.productId ?? '',
+        parameterName: initialData.parameterName ?? '',
+        standardReference: initialData.standardReference ?? '',
+        stpDocumentNumber: initialData.stpDocumentNumber ?? '',
+        stpVersionNumber: initialData.stpVersionNumber ?? '',
+        minLimit: initialData.minLimit?.toString() ?? '',
+        maxLimit: initialData.maxLimit?.toString() ?? '',
+        textSpecification: initialData.textSpecification ?? '',
+        isCritical: initialData.isCritical ?? true,
+      }
+    }
+    return emptyForm
+  }
+
+  const [form, setForm] = useState(getInitialForm)
   const [errors, setErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
-
-  // Pre-fill form when editing
-  useEffect(() => {
-    if (open) {
-      if (mode === 'update' && initialData) {
-        setForm({
-          productId: initialData.productId ?? '',
-          parameterName: initialData.parameterName ?? '',
-          standardReference: initialData.standardReference ?? '',
-          stpDocumentNumber: initialData.stpDocumentNumber ?? '',
-          stpVersionNumber: initialData.stpVersionNumber ?? '',
-          minLimit: initialData.minLimit?.toString() ?? '',
-          maxLimit: initialData.maxLimit?.toString() ?? '',
-          textSpecification: initialData.textSpecification ?? '',
-          isCritical: initialData.isCritical ?? true,
-        })
-      } else {
-        setForm(emptyForm)
-      }
-      setErrors({})
-    }
-  }, [open, mode, initialData])
 
   const handleChange = (field) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value

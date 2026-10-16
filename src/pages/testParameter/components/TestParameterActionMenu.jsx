@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { MoreVertical, Pencil, Trash2, X } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { useAuthRights } from '../../../auth/useAuthRights'
 import { Rights } from '../../../constants/rights'
 

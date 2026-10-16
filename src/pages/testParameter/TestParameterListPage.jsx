@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { Plus, FlaskConical } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { Plus } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
 import { TestParameterCreateModal } from './TestParameterCreateModal'
@@ -45,9 +45,10 @@ export function TestParameterListPage() {
     setError(null)
     try {
       const params = {}
-      if (filters.productId) params.productId = filters.productId
-      if (filters.search) params.search = filters.search
-      if (filters.standardReference) params.standardReference = filters.standardReference
+      const activeFilters = filters || {}
+      if (activeFilters.productId) params.productId = activeFilters.productId
+      if (activeFilters.search) params.search = activeFilters.search
+      if (activeFilters.standardReference) params.standardReference = activeFilters.standardReference
 
       const response = await testParameterApi.getAll(Object.keys(params).length > 0 ? params : undefined)
       const items = response.data?.data ?? response.data ?? []
@@ -62,8 +63,11 @@ export function TestParameterListPage() {
     }
   }, [filters, addToast])
 
-  // Initial load
-  fetchData()
+  // Re-fetch when filters change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData()
+  }, [fetchData])
 
   // Filter handlers
   const handleFilterChange = (key, value) => {
@@ -186,8 +190,9 @@ export function TestParameterListPage() {
       {/* Data table */}
       <DataTable columns={columns} data={data} loading={loading} />
 
-      {/* Create/Edit Modal */}
+      {/* Create/Edit Modal — key forces re-mount so initial state resets */}
       <TestParameterCreateModal
+        key={`${modalMode}-${editingRow?.id ?? 'new'}`}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         mode={modalMode}
