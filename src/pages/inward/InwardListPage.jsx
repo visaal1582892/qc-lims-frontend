@@ -114,22 +114,6 @@ export function InwardListPage() {
     }
   }
 
-  const columns = [
-    { accessor: 'arNumber', header: 'AR Number' },
-    { accessor: 'batchNo', header: 'Batch No' },
-    { accessor: 'productId', header: 'Product ID' },
-    { accessor: 'receivedQuantityPacks', header: 'Packs' },
-    { accessor: 'totalReceivedUnits', header: 'Total Units' },
-    { accessor: 'storageLocation', header: 'Storage' },
-    { accessor: 'arStatus', header: 'AR Status' },
-    {
-      accessor: 'testCompletionRate',
-      header: 'Completion %',
-      render: (val) => (val != null ? `${val}%` : '—'),
-    },
-    { accessor: 'receiptDate', header: 'Receipt Date' },
-  ]
-
   // Phase 5: Row-level lifecycle action buttons
   const rowActions = (row) => {
     const actions = []
@@ -151,6 +135,56 @@ export function InwardListPage() {
     }
     return actions
   }
+
+  // DataTable columns — uses key/label API per DataTable component contract
+  const columns = [
+    { key: 'arNumber', label: 'AR Number' },
+    { key: 'batchNo', label: 'Batch No' },
+    { key: 'productId', label: 'Product ID' },
+    { key: 'receivedQuantityPacks', label: 'Packs' },
+    { key: 'totalReceivedUnits', label: 'Total Units' },
+    { key: 'storageLocation', label: 'Storage' },
+    { key: 'arStatus', label: 'AR Status' },
+    {
+      key: 'testCompletionRate',
+      label: 'Completion %',
+      render: (val) => (val != null ? `${val}%` : '\u2014'),
+    },
+    { key: 'receiptDate', label: 'Receipt Date' },
+    {
+      key: '_actions',
+      label: 'Actions',
+      stickyRight: true,
+      filter: false,
+      render: (_val, row) => {
+        const actionsList = rowActions(row)
+        if (actionsList.length === 0) return '\u2014'
+        return (
+          <div className="flex items-center gap-1.5 justify-end">
+            {actionsList.map((action) => {
+              const Icon = action.icon
+              const bgMap = {
+                success: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200',
+                danger: 'bg-rose-50 text-rose-700 hover:bg-rose-100 border-rose-200',
+              }
+              const bg = bgMap[action.variant] || 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'
+              return (
+                <button
+                  key={action.label}
+                  type="button"
+                  onClick={action.onClick}
+                  className={`inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md border transition ${bg}`}
+                >
+                  <Icon className="w-3 h-3" />
+                  {action.label}
+                </button>
+              )
+            })}
+          </div>
+        )
+      },
+    },
+  ]
 
   const actions = []
   if (hasRight(Rights.ROLE_INWARD_CREATE)) {

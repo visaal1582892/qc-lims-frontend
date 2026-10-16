@@ -1,4 +1,4 @@
-import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube } from 'lucide-react'
+import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube, ShieldCheck } from 'lucide-react'
 import { Rights } from './rights'
 
 /**
@@ -55,5 +55,11 @@ export const navConfig = [
     path: '/test-execution',
     icon: TestTube,
     right: Rights.ROLE_TEST_VIEW,
+  },
+  {
+    label: 'Review Queue',
+    path: '/review/qc-head',
+    icon: ShieldCheck,
+    right: Rights.ROLE_QC_HEAD_REVIEW,
   },
 ]

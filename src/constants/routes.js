@@ -18,4 +18,10 @@ export const Routes = {
   // Test Allocation & Execution State Machine (Phase 4) — SRS Module 6
   TEST_ALLOCATION: '/test-allocation',
   TEST_EXECUTION: '/test-execution',
+
+  // Review Workflow (Phase 5) — SRS Module 7
+  QC_REVIEW_QUEUE: '/review/qc-head',
+  QA_REVIEW_QUEUE: '/review/qa-head',
+  REVIEW_DETAIL: '/review/:executionId',
+  REWORK_QUEUE: '/review/rework',
 }
