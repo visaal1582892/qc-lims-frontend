@@ -6,4 +6,7 @@ export const Routes = {
   DASHBOARD: '/dashboard',
   LOGIN: '/login',
   TEST_PARAMETERS: '/test-parameters',
+  INWARD: '/inward',
+  TRF: '/trf',
+  ANALYTICS: '/analytics',
 }

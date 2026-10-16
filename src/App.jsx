@@ -4,6 +4,8 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { TestParameterListPage } from './pages/testParameter/TestParameterListPage'
+import { InwardListPage } from './pages/inward/InwardListPage'
+import { TrfListPage } from './pages/trf/TrfListPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -23,6 +25,16 @@ function App() {
             <Route path={AppRoutes.TEST_PARAMETERS} element={
               <ProtectedRoute>
                 <TestParameterListPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.INWARD} element={
+              <ProtectedRoute>
+                <InwardListPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TRF} element={
+              <ProtectedRoute>
+                <TrfListPage />
               </ProtectedRoute>
             } />
           </Route>

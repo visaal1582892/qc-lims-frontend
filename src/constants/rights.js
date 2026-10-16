@@ -2,7 +2,7 @@
  * Mirrors backend Rights.java exactly.
  * All rights use the ROLE_ prefix for Spring Security compatibility.
  *
- * Updated Phase 1: Test Parameter Master rights.
+ * Updated Phase 2: Inward, e-TRF, Receipt Checklist rights added.
  */
 export const Rights = {
   // Test Parameter Master (Phase 1) — SRS Module 1
@@ -10,4 +10,30 @@ export const Rights = {
   ROLE_TEST_PARAMETER_CREATE: 'ROLE_TEST_PARAMETER_CREATE',
   ROLE_TEST_PARAMETER_UPDATE: 'ROLE_TEST_PARAMETER_UPDATE',
   ROLE_TEST_PARAMETER_DELETE: 'ROLE_TEST_PARAMETER_DELETE',
+
+  // Sample Inward Register (Phase 2) — SRS Module 2
+  ROLE_INWARD_VIEW: 'ROLE_INWARD_VIEW',
+  ROLE_INWARD_CREATE: 'ROLE_INWARD_CREATE',
+  ROLE_INWARD_UPDATE: 'ROLE_INWARD_UPDATE',
+  ROLE_INWARD_DELETE: 'ROLE_INWARD_DELETE',
+
+  // e-TRF Management (Phase 2) — SRS Module 3
+  ROLE_TRF_VIEW: 'ROLE_TRF_VIEW',
+  ROLE_TRF_CREATE: 'ROLE_TRF_CREATE',
+  ROLE_TRF_UPDATE: 'ROLE_TRF_UPDATE',
+  ROLE_TRF_DELETE: 'ROLE_TRF_DELETE',
+  ROLE_TRF_ACCEPT: 'ROLE_TRF_ACCEPT',
+  ROLE_TRF_REJECT: 'ROLE_TRF_REJECT',
+  ROLE_TRF_ASSIGN_PARAMETERS: 'ROLE_TRF_ASSIGN_PARAMETERS',
+
+  // Receipt Checklist (Phase 2) — SRS Module 3
+  ROLE_RECEIPT_CHECKLIST_VIEW: 'ROLE_RECEIPT_CHECKLIST_VIEW',
+  ROLE_RECEIPT_CHECKLIST_CREATE: 'ROLE_RECEIPT_CHECKLIST_CREATE',
+  ROLE_RECEIPT_CHECKLIST_UPDATE: 'ROLE_RECEIPT_CHECKLIST_UPDATE',
+
+  // QC Dashboard (Phase 8) — SRS Module 12.1
+  ROLE_DASHBOARD_VIEW: 'ROLE_DASHBOARD_VIEW',
+
+  // Multi-Dimensional Analytics (Phase 8) — SRS Module 12.2
+  ROLE_ANALYTICS_VIEW: 'ROLE_ANALYTICS_VIEW',
 }
