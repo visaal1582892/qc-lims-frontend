@@ -17,6 +17,8 @@ import { QaReviewQueuePage } from './pages/review/QaReviewQueuePage'
 import { ReviewDetailPage } from './pages/review/ReviewDetailPage'
 import { OosIncidentsPage } from './pages/oos/OosIncidentsPage'
 import { TrialTestsPage } from './pages/trialTests/TrialTestsPage'
+import { SubcontractRegisterPage } from './pages/subcontracting/SubcontractRegisterPage'
+import { DocumentRegistryPage } from './pages/documents/DocumentRegistryPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -106,6 +108,21 @@ function App() {
             <Route path={AppRoutes.TRIAL_TESTS} element={
               <ProtectedRoute>
                 <TrialTestsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.SUBCONTRACT_REGISTER} element={
+              <ProtectedRoute>
+                <SubcontractRegisterPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.SUBCONTRACT_DETAIL} element={
+              <ProtectedRoute>
+                <SubcontractRegisterPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.DOCUMENT_REGISTRY} element={
+              <ProtectedRoute>
+                <DocumentRegistryPage />
               </ProtectedRoute>
             } />
           </Route>

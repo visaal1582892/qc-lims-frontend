@@ -52,6 +52,10 @@ export const uploadCoa = (arNumber, file) => {
 export const getDocuments = (arNumber) =>
   client.get(`/documents/${arNumber}`);
 
+/** DM-06: List all documents */
+export const listDocuments = () =>
+  client.get('/documents/all');
+
 /** DM-04: Download document */
 export const downloadDocument = (fileId) =>
   client.get(`/documents/download/${fileId}`, { responseType: 'blob' });

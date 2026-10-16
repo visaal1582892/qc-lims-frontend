@@ -29,4 +29,11 @@ export const Routes = {
   OOS_INCIDENTS: '/oos-incidents',
   OOS_INCIDENT_DETAIL: '/oos-incidents/:id',
   TRIAL_TESTS: '/trial-tests',
+
+  // Subcontracting (Phase 7) — SRS Module 10
+  SUBCONTRACT_REGISTER: '/subcontracts',
+  SUBCONTRACT_DETAIL: '/subcontracts/:id',
+
+  // Document Management (Phase 7) — SRS Module 11
+  DOCUMENT_REGISTRY: '/documents',
 }
