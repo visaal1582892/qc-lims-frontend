@@ -1,4 +1,4 @@
-import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package } from 'lucide-react'
+import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube } from 'lucide-react'
 import { Rights } from './rights'
 
 /**
@@ -43,5 +43,17 @@ export const navConfig = [
     path: '/inventory',
     icon: Package,
     right: Rights.ROLE_INVENTORY_READ,
+  },
+  {
+    label: 'Test Allocation',
+    path: '/test-allocation',
+    icon: TestTube,
+    right: Rights.ROLE_TEST_ALLOCATE,
+  },
+  {
+    label: 'Test Execution',
+    path: '/test-execution',
+    icon: TestTube,
+    right: Rights.ROLE_TEST_VIEW,
   },
 ]

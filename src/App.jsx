@@ -10,6 +10,8 @@ import { AnalyticsPage } from './pages/AnalyticsPage'
 import { InventoryListPage } from './pages/inventory/InventoryListPage'
 import { InventoryDetailPage } from './pages/inventory/InventoryDetailPage'
 import { InventoryVariancePage } from './pages/inventory/InventoryVariancePage'
+import { TestAllocationPage } from './pages/testExecution/TestAllocationPage'
+import { TestExecutionPage } from './pages/testExecution/TestExecutionPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -59,6 +61,16 @@ function App() {
             <Route path={AppRoutes.INVENTORY_VARIANCE} element={
               <ProtectedRoute>
                 <InventoryVariancePage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TEST_ALLOCATION} element={
+              <ProtectedRoute>
+                <TestAllocationPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TEST_EXECUTION} element={
+              <ProtectedRoute>
+                <TestExecutionPage />
               </ProtectedRoute>
             } />
           </Route>

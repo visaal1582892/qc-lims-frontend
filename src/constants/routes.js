@@ -14,4 +14,8 @@ export const Routes = {
   // H-3 fix: INVENTORY_STORAGE constant removed — storage allocation is handled
   // via modal (StorageAllocationView) from InventoryDetailPage, not as a standalone route.
   INVENTORY_VARIANCE: '/inventory/variance',
+
+  // Test Allocation & Execution State Machine (Phase 4) — SRS Module 6
+  TEST_ALLOCATION: '/test-allocation',
+  TEST_EXECUTION: '/test-execution',
 }
