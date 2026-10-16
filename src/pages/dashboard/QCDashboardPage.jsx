@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { PageHeader } from '../../../components/layout/PageHeader'
-import { Spinner } from '../../../components/feedback/Spinner'
-import { MetricCard } from './components/MetricCard'
-import { StatusChart } from './components/StatusChart'
-import { ProductivityTable } from './components/ProductivityTable'
-import { dashboardApi } from '../../../api/dashboardApi'
-import { analyticsApi } from '../../../api/analyticsApi'
+import { PageHeader } from '../../components/layout/PageHeader';
+import { Spinner } from '../../components/feedback/Spinner';
+import { MetricCard } from './components/MetricCard';
+import { StatusChart } from './components/StatusChart';
+import { ProductivityTable } from './components/ProductivityTable';
+import { dashboardApi } from '../../api/dashboardApi';
 
 /**
  * KPI section definitions for dashboard metric cards.
@@ -76,10 +75,10 @@ export function QCDashboardPage() {
     Promise.all([
       dashboardApi.getMetrics(),
       dashboardApi.getStatusFiltering('all'),
-      analyticsApi.summaryByAnalyst(
-        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-        new Date().toISOString().slice(0, 10)
-      ).catch(() => null),
+      dashboardApi.getAnalystProductivity(1, {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        endDate: new Date().toISOString().slice(0, 10)
+      }).catch(() => null),
     ])
       .then(([metricsRes, statusRes, prodRes]) => {
         setMetrics(metricsRes.data?.data ?? metricsRes.data)
