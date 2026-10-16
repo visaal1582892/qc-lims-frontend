@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 /**
  * Headless custom hook for async data fetching.
@@ -24,10 +24,12 @@ export function useAsyncData(fetchFn) {
     }
   }, [fetchFn])
 
-  // Initial fetch
-  if (state.loading && state.data === null) {
-    refetch()
-  }
+  // Initial fetch via useEffect (avoids render-phase side effect in StrictMode)
+  useEffect(() => {
+    if (state.data === null && !state.loading) {
+      refetch()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     data: state.data,

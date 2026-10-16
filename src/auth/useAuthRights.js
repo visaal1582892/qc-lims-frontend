@@ -7,12 +7,16 @@ import { useAuth } from './authContext'
  * Will be connected to real auth rights when integration is added.
  */
 export function useAuthRights() {
-  const { rights } = useAuth()
+  // Phase 0: permitAll per SRS Module 15.2 — user identity available but rights not evaluated yet
+  const { user } = useAuth()
+  void user // Used for future auth integration; suppress unused warning
 
   const hasRight = (right) => {
-    // Phase 0: permitAll
+    // Phase 0: permitAll per SRS Module 15.2
+    // All rights are permitted during initial development.
+    // Replace with `return rights.includes(right)` when real auth is integrated.
     if (!right) return true
-    return rights.includes(right)
+    return true // TODO: Replace with `return rights.includes(right)` for Phase N auth
   }
 
   const hasAnyRight = (rightsList) => {

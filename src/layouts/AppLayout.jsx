@@ -19,6 +19,44 @@ export function AppLayout({ children }) {
 
   const menuItems = navConfig
 
+  // Shared menu item renderer — accepts `collapsed` to switch between icon-only and full row
+  const renderMenuItems = (collapsed) =>
+    menuItems.map((item) => {
+      const Icon = item.icon
+      const isActive = location.pathname === item.path
+
+      return collapsed ? (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={`group relative flex items-center justify-center w-full h-10 rounded-lg transition-colors ${
+            isActive ? 'bg-primary-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <Icon className="h-5 w-5" />
+          {/* Hover tooltip when collapsed */}
+          {!sidebarHover && (
+            <div className="absolute left-full ml-3 z-50 rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+              {item.label}
+            </div>
+          )}
+        </NavLink>
+      ) : (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            isActive
+              ? 'bg-primary-600 text-white'
+              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+          }`}
+        >
+          <Icon className="h-5 w-5" />
+          <span>{item.label}</span>
+        </NavLink>
+      )
+    })
+
   return (
     <div className="flex min-h-screen bg-slate-100">
       {/* Sidebar — always 72px base, overlay on hover */}
@@ -35,28 +73,7 @@ export function AppLayout({ children }) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const Icon = item.icon
-            const isActive = location.pathname === item.path
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`group relative flex items-center justify-center w-full h-10 rounded-lg transition-colors ${
-                  isActive ? 'bg-primary-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                {/* Hover tooltip when collapsed */}
-                {!sidebarHover && (
-                  <div className="absolute left-full ml-3 z-50 rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                    {item.label}
-                  </div>
-                )}
-              </NavLink>
-            )
-          })}
+          {renderMenuItems(true)}
         </nav>
 
         {/* User pill at bottom */}
@@ -75,25 +92,7 @@ export function AppLayout({ children }) {
               <span className="text-sm font-semibold text-slate-400">QC LIMS</span>
             </div>
             <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-              {menuItems.map((item) => {
-                const Icon = item.icon
-                const isActive = location.pathname === item.path
-
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-primary-600 text-white'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                )
-              })}
+              {renderMenuItems(false)}
             </nav>
           </div>
         )}

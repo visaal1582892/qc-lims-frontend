@@ -33,6 +33,7 @@ export function FormSelect({
         onChange={onChange}
         disabled={disabled}
         aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : helperText ? `${id}-helper` : undefined}
         className={`w-full rounded-lg border px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition appearance-none
           focus:ring-2 focus:border-primary-500 focus:ring-primary-100
           disabled:bg-slate-50 disabled:text-slate-400
@@ -47,9 +48,9 @@ export function FormSelect({
         ))}
       </select>
       {error ? (
-        <p className="text-[11px] text-rose-600">{error}</p>
+        <p id={`${id}-error`} className="text-[11px] text-rose-600">{error}</p>
       ) : helperText ? (
-        <p className="text-[11px] text-slate-400">{helperText}</p>
+        <p id={`${id}-helper`} className="text-[11px] text-slate-400">{helperText}</p>
       ) : null}
     </div>
   )

@@ -7,8 +7,8 @@ import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
         <Routes>
           <Route path={AppRoutes.HOME} element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
           <Route path={AppRoutes.LOGIN} element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
@@ -23,8 +23,8 @@ function App() {
 
           <Route path="*" element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 
