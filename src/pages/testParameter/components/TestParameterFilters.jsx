@@ -20,7 +20,7 @@ export function TestParameterFilters({ filters, onFilterChange, onReset }) {
 
   return (
     <div className="flex flex-wrap items-end gap-3 mb-4">
-      <div style={{ minWidth: 140 }}>
+      <div className="min-w-[140px]">
         <input
           type="number"
           placeholder="Product ID"
@@ -31,7 +31,7 @@ export function TestParameterFilters({ filters, onFilterChange, onReset }) {
         <p className="text-[11px] text-slate-400 mt-0.5">Filter by product</p>
       </div>
 
-      <div style={{ minWidth: 200 }}>
+      <div className="min-w-[200px]">
         <input
           type="text"
           placeholder="Search parameter name..."
@@ -42,7 +42,7 @@ export function TestParameterFilters({ filters, onFilterChange, onReset }) {
         <p className="text-[11px] text-slate-400 mt-0.5">Search by name</p>
       </div>
 
-      <div style={{ minWidth: 130 }}>
+      <div className="min-w-[130px]">
         <select
           value={filters.standardReference || ''}
           onChange={(e) => onFilterChange('standardReference', e.target.value)}

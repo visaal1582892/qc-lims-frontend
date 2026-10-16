@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Plus } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
@@ -23,8 +23,12 @@ export function TestParameterListPage() {
   const [loading, setDataLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Filter state
+  // Filter state (immediate UI updates)
   const [filters, setFilters] = useState({ productId: '', search: '', standardReference: '' })
+
+  // Debounced filter state (sent to backend after debounce)
+  const [debouncedFilters, setDebouncedFilters] = useState({ productId: '', search: '', standardReference: '' })
+  const debounceTimerRef = useRef(null)
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
@@ -39,16 +43,15 @@ export function TestParameterListPage() {
     setTimeout(() => setToast(null), 4000)
   }, [])
 
-  // Fetch data
+  // Fetch data — uses debouncedFilters to avoid excessive requests
   const fetchData = useCallback(async () => {
     setDataLoading(true)
     setError(null)
     try {
       const params = {}
-      const activeFilters = filters || {}
-      if (activeFilters.productId) params.productId = activeFilters.productId
-      if (activeFilters.search) params.search = activeFilters.search
-      if (activeFilters.standardReference) params.standardReference = activeFilters.standardReference
+      if (debouncedFilters.productId) params.productId = debouncedFilters.productId
+      if (debouncedFilters.search) params.search = debouncedFilters.search
+      if (debouncedFilters.standardReference) params.standardReference = debouncedFilters.standardReference
 
       const response = await testParameterApi.getAll(Object.keys(params).length > 0 ? params : undefined)
       const items = response.data?.data ?? response.data ?? []
@@ -61,21 +64,52 @@ export function TestParameterListPage() {
     } finally {
       setDataLoading(false)
     }
-  }, [filters, addToast])
+  }, [debouncedFilters, addToast])
 
-  // Re-fetch when filters change
+  // Re-fetch when debounced filters change
+  // Data fetching in useEffect is the standard React pattern for params-driven refetching.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [fetchData])
 
-  // Filter handlers
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Filter handlers — debounce productId and search; standardReference applies immediately (select)
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
+
+    // Clear any pending debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    if (key === 'productId' || key === 'search') {
+      // Debounce text input changes (300ms)
+      debounceTimerRef.current = setTimeout(() => {
+        setDebouncedFilters((prev) => ({ ...prev, [key]: value }))
+        debounceTimerRef.current = null
+      }, 300)
+    } else {
+      // Select/dropdown changes apply immediately
+      setDebouncedFilters((prev) => ({ ...prev, [key]: value }))
+    }
   }
 
   const handleFilterReset = () => {
     setFilters({ productId: '', search: '', standardReference: '' })
+    setDebouncedFilters({ productId: '', search: '', standardReference: '' })
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
   }
 
   // CRUD callbacks
