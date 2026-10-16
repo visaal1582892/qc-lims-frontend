@@ -6,23 +6,23 @@ import client from './client';
 
 /** SC-01: Create a subcontract entry */
 export const createSubcontract = (data) =>
-  client.post('/subcontracts', data);
+  client.post('/v1/subcontracts', data);
 
 /** SC-02: List all subcontract entries */
 export const listSubcontracts = () =>
-  client.get('/subcontracts');
+  client.get('/v1/subcontracts');
 
 /** SC-03: Get subcontract detail */
 export const getSubcontract = (id) =>
-  client.get(`/subcontracts/${id}`);
+  client.get(`/v1/subcontracts/${id}`);
 
 /** SC-04: Update subcontract remarks/status */
 export const updateSubcontract = (id, data) =>
-  client.put(`/subcontracts/${id}`, data);
+  client.put(`/v1/subcontracts/${id}`, data);
 
 /** SC-05: Mark ROA as received */
 export const markRoaReceived = (id) =>
-  client.patch(`/subcontracts/${id}/roa-received`);
+  client.patch(`/v1/subcontracts/${id}/roa-received`);
 
 /**
  * Document Management API client (SRS Module 11).
@@ -32,7 +32,7 @@ export const markRoaReceived = (id) =>
 export const uploadRoa = (executionId, file) => {
   const formData = new FormData();
   formData.append('file', file);
-  return client.post('/documents/roa', formData, {
+  return client.post('/v1/documents/roa', formData, {
     params: { executionId },
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -42,7 +42,7 @@ export const uploadRoa = (executionId, file) => {
 export const uploadCoa = (arNumber, file) => {
   const formData = new FormData();
   formData.append('file', file);
-  return client.post('/documents/coa', formData, {
+  return client.post('/v1/documents/coa', formData, {
     params: { arNumber },
     headers: { 'Content-Type': 'multipart/form-data' },
   });
@@ -50,12 +50,12 @@ export const uploadCoa = (arNumber, file) => {
 
 /** DM-03: List documents for AR */
 export const getDocuments = (arNumber) =>
-  client.get(`/documents/${arNumber}`);
+  client.get(`/v1/documents/${arNumber}`);
 
 /** DM-06: List all documents */
 export const listDocuments = () =>
-  client.get('/documents/all');
+  client.get('/v1/documents/all');
 
 /** DM-04: Download document */
 export const downloadDocument = (fileId) =>
-  client.get(`/documents/download/${fileId}`, { responseType: 'blob' });
+  client.get(`/v1/documents/download/${fileId}`, { responseType: 'blob' });
