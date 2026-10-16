@@ -33,9 +33,9 @@ export function DataTable({ columns = [], data = [], loading = false }) {
         <thead className="sticky top-0 z-20 bg-slate-50">
           {/* Header row */}
           <tr>
-            {columns.map((col) => (
+            {columns.map((col, i) => (
               <th
-                key={col.key}
+                key={col.key ?? i}
                 className={`text-xs font-semibold uppercase tracking-wide text-slate-500 px-4 py-3 text-left border-b border-slate-200 ${col.stickyRight ? 'sticky right-0 z-30 bg-slate-200 text-right' : ''}`}
                 style={col.width ? { width: col.width } : undefined}
               >
@@ -83,9 +83,9 @@ export function DataTable({ columns = [], data = [], loading = false }) {
           ) : (
             filteredData.map((row, rowIdx) => (
               <tr key={row.id ?? rowIdx} className="bg-white hover:bg-slate-50/80 transition-colors">
-                {columns.map((col) => (
+                {columns.map((col, ci) => (
                   <td
-                    key={`${row.id ?? rowIdx}-${col.key}`}
+                    key={`${row.id ?? rowIdx}-${col.key ?? ci}`}
                     className={`px-4 py-2.5 text-slate-700 border-b border-slate-100 ${col.stickyRight ? 'sticky right-0 z-[1] bg-slate-50 text-right' : ''}`}
                   >
                     {col.render ? col.render(row[col.key], row) : row[col.key] ?? '-'}
