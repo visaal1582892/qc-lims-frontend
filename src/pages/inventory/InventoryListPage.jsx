@@ -5,13 +5,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Package, AlertTriangle, TrendingDown, Plus } from 'lucide-react'
-import { PageHeader } from '../../../components/layout/PageHeader'
-import { DataTable } from '../../../components/table/DataTable'
-import { Spinner } from '../../../components/feedback/Spinner'
-import { inventoryApi } from '../../../api/inventoryApi'
+import { PageHeader } from '../../components/layout/PageHeader'
+import { DataTable } from '../../components/table/DataTable'
+import { Spinner } from '../../components/feedback/Spinner'
+import { inventoryApi } from '../../api/inventoryApi'
 import { StorageConditionBadge } from './components/StorageConditionBadge'
 import { VarianceAlert } from './components/VarianceAlert'
-import { formatDate } from '../../../utils/formatters'
+import { formatDate } from '../../utils/formatters'
 
 export function InventoryListPage() {
   const navigate = useNavigate()

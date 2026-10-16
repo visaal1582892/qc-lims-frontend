@@ -7,6 +7,9 @@ import { TestParameterListPage } from './pages/testParameter/TestParameterListPa
 import { InwardListPage } from './pages/inward/InwardListPage'
 import { TrfListPage } from './pages/trf/TrfListPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
+import { InventoryListPage } from './pages/inventory/InventoryListPage'
+import { InventoryDetailPage } from './pages/inventory/InventoryDetailPage'
+import { InventoryVariancePage } from './pages/inventory/InventoryVariancePage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -41,6 +44,21 @@ function App() {
             <Route path={AppRoutes.ANALYTICS} element={
               <ProtectedRoute>
                 <AnalyticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.INVENTORY} element={
+              <ProtectedRoute>
+                <InventoryListPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.INVENTORY_DETAIL} element={
+              <ProtectedRoute>
+                <InventoryDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.INVENTORY_VARIANCE} element={
+              <ProtectedRoute>
+                <InventoryVariancePage />
               </ProtectedRoute>
             } />
           </Route>
