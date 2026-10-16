@@ -13,10 +13,14 @@ import { VarianceAlert } from './components/VarianceAlert'
 import { StorageAllocationView } from './components/StorageAllocationView'
 import { BarcodeLabelView } from './components/BarcodeLabelView'
 import { formatDate } from '../../utils/formatters'
+// M-2 fix: Add right-gated UI elements
+import { useAuthRights } from '../../auth/useAuthRights'
+import { Rights } from '../../constants/rights'
 
 export function InventoryDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { hasRight } = useAuthRights()
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -27,7 +31,6 @@ export function InventoryDetailPage() {
 
   // Allocation form
   const [allocQty, setAllocQty] = useState('')
-  const [analystId, setAnalystId] = useState('')
   const [allocLoading, setAllocLoading] = useState(false)
 
   // Consumption form
@@ -52,12 +55,12 @@ export function InventoryDetailPage() {
   }
 
   const handleAllocate = async () => {
-    if (!allocQty || !analystId) return
+    // B-3 fix: allocatedToAnalystId removed — deferred to Module 6
+    if (!allocQty) return
     setAllocLoading(true)
     try {
-      await inventoryApi.allocate(id, { quantity: parseInt(allocQty), allocatedToAnalystId: parseInt(analystId) })
+      await inventoryApi.allocate(id, { quantity: parseInt(allocQty) })
       setAllocQty('')
-      setAnalystId('')
       loadDetail()
     } catch (err) {
       setError(err.response?.data?.message || 'Allocation failed')
@@ -109,20 +112,24 @@ export function InventoryDetailPage() {
         subtitle={`Batch: ${item.batchNo} | Product ID: ${item.productId}`}
         actions={
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowBarcode(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-            >
-              <QrCode className="h-4 w-4" />
-              Barcode
-            </button>
-            <button
-              onClick={() => setShowStorage(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
-            >
-              <MapPin className="h-4 w-4" />
-              Change Storage
-            </button>
+            {hasRight(Rights.ROLE_BARCODE_GENERATE) && (
+              <button
+                onClick={() => setShowBarcode(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              >
+                <QrCode className="h-4 w-4" />
+                Barcode
+              </button>
+            )}
+            {hasRight(Rights.ROLE_STORAGE_ASSIGN) && (
+              <button
+                onClick={() => setShowStorage(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              >
+                <MapPin className="h-4 w-4" />
+                Change Storage
+              </button>
+            )}
             <button
               onClick={() => navigate('/inventory')}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
@@ -210,69 +217,63 @@ export function InventoryDetailPage() {
         </div>
       </div>
 
-      {/* Action Forms */}
+      {/* Action Forms — M-2: right-gated */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Allocate */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Allocate to Analyst</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Analyst ID <span className="text-rose-500">*</span></label>
-              <input
-                type="number"
-                value={analystId}
-                onChange={e => setAnalystId(e.target.value)}
-                placeholder="Enter analyst ID"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-              />
+        {/* Allocate — B-3 fix: analystId field removed */}
+        {hasRight(Rights.ROLE_INVENTORY_ALLOCATE) && (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Allocate Quantity</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Quantity <span className="text-rose-500">*</span></label>
+                <input
+                  type="number"
+                  min="1"
+                  value={allocQty}
+                  onChange={e => setAllocQty(e.target.value)}
+                  placeholder={`Available: ${available}`}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+              <button
+                onClick={handleAllocate}
+                disabled={allocLoading || !allocQty}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50"
+              >
+                {allocLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Allocate
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Quantity <span className="text-rose-500">*</span></label>
-              <input
-                type="number"
-                min="1"
-                value={allocQty}
-                onChange={e => setAllocQty(e.target.value)}
-                placeholder={`Available: ${available}`}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-              />
-            </div>
-            <button
-              onClick={handleAllocate}
-              disabled={allocLoading || !allocQty || !analystId}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50"
-            >
-              {allocLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Allocate
-            </button>
           </div>
-        </div>
+        )}
 
         {/* Consume */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Record Consumption</h3>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Quantity <span className="text-rose-500">*</span></label>
-              <input
-                type="number"
-                min="1"
-                value={consumeQty}
-                onChange={e => setConsumeQty(e.target.value)}
-                placeholder={`Available to consume: ${variance}`}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-              />
+        {hasRight(Rights.ROLE_INVENTORY_CONSUME) && (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <h3 className="text-sm font-semibold text-slate-700 mb-3">Record Consumption</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Quantity <span className="text-rose-500">*</span></label>
+                <input
+                  type="number"
+                  min="1"
+                  value={consumeQty}
+                  onChange={e => setConsumeQty(e.target.value)}
+                  placeholder={`Available to consume: ${variance}`}
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+              <button
+                onClick={handleConsume}
+                disabled={consumeLoading || !consumeQty}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50"
+              >
+                {consumeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Record Consumption
+              </button>
             </div>
-            <button
-              onClick={handleConsume}
-              disabled={consumeLoading || !consumeQty}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition disabled:opacity-50"
-            >
-              {consumeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Record Consumption
-            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}

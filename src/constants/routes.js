@@ -11,6 +11,7 @@ export const Routes = {
   ANALYTICS: '/analytics',
   INVENTORY: '/inventory',
   INVENTORY_DETAIL: '/inventory/:id',
-  INVENTORY_STORAGE: '/inventory/storage',
+  // H-3 fix: INVENTORY_STORAGE constant removed — storage allocation is handled
+  // via modal (StorageAllocationView) from InventoryDetailPage, not as a standalone route.
   INVENTORY_VARIANCE: '/inventory/variance',
 }

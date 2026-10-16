@@ -11,8 +11,12 @@ import { inventoryApi } from '../../api/inventoryApi'
 import { StorageConditionBadge } from './components/StorageConditionBadge'
 import { VarianceAlert } from './components/VarianceAlert'
 import { formatDate } from '../../utils/formatters'
+// M-2 fix: Add right-gated UI elements
+import { useAuthRights } from '../../auth/useAuthRights'
+import { Rights } from '../../constants/rights'
 
 export function InventoryVariancePage() {
+  const { hasRight } = useAuthRights()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -71,6 +75,15 @@ export function InventoryVariancePage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Spinner />
+      </div>
+    )
+  }
+
+  // M-2: Gate entire page content behind variance right
+  if (!hasRight(Rights.ROLE_INVENTORY_VARIANCE)) {
+    return (
+      <div className="text-center py-10 text-slate-500">
+        <p>You do not have permission to view variance reports.</p>
       </div>
     )
   }

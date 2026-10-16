@@ -12,9 +12,13 @@ import { inventoryApi } from '../../api/inventoryApi'
 import { StorageConditionBadge } from './components/StorageConditionBadge'
 import { VarianceAlert } from './components/VarianceAlert'
 import { formatDate } from '../../utils/formatters'
+// M-2 fix: Add right-gated UI elements
+import { useAuthRights } from '../../auth/useAuthRights'
+import { Rights } from '../../constants/rights'
 
 export function InventoryListPage() {
   const navigate = useNavigate()
+  const { hasRight } = useAuthRights()
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -105,13 +109,18 @@ export function InventoryListPage() {
         title="QC Inventory"
         subtitle="Manage sample inventory, allocation, and consumption tracking"
         actions={
-          <button
-            onClick={() => navigate('/inventory/new')}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
-          >
-            <Plus className="h-4 w-4" />
-            New Inventory
-          </button>
+          hasRight(Rights.ROLE_INVENTORY_CREATE) && (
+            <button
+              // L-3 fix: Navigate to inward registration (inventory created via inward acceptance flow)
+              // instead of non-existent /inventory/new route
+              onClick={() => navigate('/inward')}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-primary-700 transition"
+              title="Create inward registration (inventory is created upon acceptance)"
+            >
+              <Plus className="h-4 w-4" />
+              New Inventory
+            </button>
+          )
         }
       />
 
