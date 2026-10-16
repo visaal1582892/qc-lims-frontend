@@ -2,7 +2,12 @@
  * Mirrors backend Rights.java exactly.
  * All rights use the ROLE_ prefix for Spring Security compatibility.
  *
- * Phase 0: Empty object — no feature rights yet.
- * Rights will be added by feature phase.
+ * Updated Phase 1: Test Parameter Master rights.
  */
-export const Rights = {}
+export const Rights = {
+  // Test Parameter Master (Phase 1) — SRS Module 1
+  ROLE_TEST_PARAMETER_READ: 'ROLE_TEST_PARAMETER_READ',
+  ROLE_TEST_PARAMETER_CREATE: 'ROLE_TEST_PARAMETER_CREATE',
+  ROLE_TEST_PARAMETER_UPDATE: 'ROLE_TEST_PARAMETER_UPDATE',
+  ROLE_TEST_PARAMETER_DELETE: 'ROLE_TEST_PARAMETER_DELETE',
+}

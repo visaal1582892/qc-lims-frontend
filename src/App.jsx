@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
+import { TestParameterListPage } from './pages/testParameter/TestParameterListPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -17,6 +18,11 @@ function App() {
             <Route path={AppRoutes.DASHBOARD} element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TEST_PARAMETERS} element={
+              <ProtectedRoute>
+                <TestParameterListPage />
               </ProtectedRoute>
             } />
           </Route>
