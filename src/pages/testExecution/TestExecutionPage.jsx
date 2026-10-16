@@ -51,7 +51,7 @@ export function TestExecutionPage() {
     setLoading(true)
     try {
       const res = await testExecutionApi.getAll().catch(() => ({ data: [] }))
-      const data = res.data ?? []
+      const data = res.data?.data ?? []
       setExecutions(data)
       setFilteredExecutions(data)
     } catch {
