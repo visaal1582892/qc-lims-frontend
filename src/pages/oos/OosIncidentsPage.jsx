@@ -63,7 +63,8 @@ export function OosIncidentsPage() {
     setLoading(true)
     try {
       const res = await oosApi.listOosIncidents().catch(() => ({ data: [] }))
-      const data = (res.data || []).map((item) => item.data ?? item) ?? []
+      const pageData = res.data?.data ?? {}
+      const data = pageData.content ?? pageData.items ?? pageData ?? []
       setIncidents(data)
       setFilteredIncidents(data)
     } catch {
