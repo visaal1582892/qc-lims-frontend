@@ -40,4 +40,16 @@ export const inwardApi = {
    * Soft-delete an inward registration (sets status to INACTIVE).
    */
   delete: (id) => api.delete(`/inward/${id}`),
+
+  // --- AR Lifecycle (Phase 5) ---
+
+  /**
+   * Close an AR (ALL_TESTS_COMPLETE -> COMPLETED).
+   */
+  closeAr: (id, data) => api.post(`/inward/${id}/ar-close`, data),
+
+  /**
+   * Cancel an AR (REGISTERED/IN_PROGRESS -> CANCELLED).
+   */
+  cancelAr: (id, data) => api.post(`/inward/${id}/ar-cancel`, data),
 }

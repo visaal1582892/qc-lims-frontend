@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Plus, Filter } from 'lucide-react'
+import { Plus, Filter, CheckCircle, XCircle } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
+import { Modal } from '../../components/feedback/Modal'
 import { InwardCreateModal } from './InwardCreateModal'
 import { inwardApi } from '../../api/inwardApi'
 import { useAuthRights } from '../../auth/useAuthRights'
 import { Rights } from '../../constants/rights'
+import { ArStatus } from '../../constants/enums'
 
 /**
  * Inward Registration list page — Tier 3 Page Container.
@@ -24,7 +26,13 @@ export function InwardListPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [filterOpen, setFilterOpen] = useState(false)
 
-  const arStatusOptions = ['Active', 'For_Information', 'Closed', 'Rejected']
+  // Phase 5: AR lifecycle modal state
+  const [lifecycleModalOpen, setLifecycleModalOpen] = useState(false)
+  const [lifecycleMode, setLifecycleMode] = useState(null) // 'close' | 'cancel'
+  const [lifecycleTarget, setLifecycleTarget] = useState(null)
+  const [lifecycleReason, setLifecycleReason] = useState('')
+
+  const arStatusOptions = Object.values(ArStatus)
 
   const addToast = useCallback((t) => {
     setToast(t)
@@ -75,6 +83,37 @@ export function InwardListPage() {
     }
   }
 
+  // --- Phase 5: AR lifecycle handlers ---
+
+  const handleOpenLifecycle = (mode, row) => {
+    setLifecycleMode(mode)
+    setLifecycleTarget(row)
+    setLifecycleReason('')
+    setLifecycleModalOpen(true)
+  }
+
+  const handleLifecycleConfirm = async () => {
+    if (!lifecycleReason.trim()) {
+      addToast({ message: 'Reason is required', type: 'error' })
+      return
+    }
+    try {
+      if (lifecycleMode === 'close') {
+        await inwardApi.closeAr(lifecycleTarget.id, { reason: lifecycleReason })
+      } else if (lifecycleMode === 'cancel') {
+        await inwardApi.cancelAr(lifecycleTarget.id, { reason: lifecycleReason })
+      }
+      addToast({
+        message: `AR ${lifecycleMode === 'close' ? 'closed' : 'cancelled'} successfully`,
+        type: 'success',
+      })
+      setLifecycleModalOpen(false)
+      fetchData()
+    } catch (err) {
+      addToast({ message: err.message ?? 'Operation failed', type: 'error' })
+    }
+  }
+
   const columns = [
     { accessor: 'arNumber', header: 'AR Number' },
     { accessor: 'batchNo', header: 'Batch No' },
@@ -82,9 +121,36 @@ export function InwardListPage() {
     { accessor: 'receivedQuantityPacks', header: 'Packs' },
     { accessor: 'totalReceivedUnits', header: 'Total Units' },
     { accessor: 'storageLocation', header: 'Storage' },
-    { accessor: 'arStatus', header: 'Status' },
+    { accessor: 'arStatus', header: 'AR Status' },
+    {
+      accessor: 'testCompletionRate',
+      header: 'Completion %',
+      render: (val) => (val != null ? `${val}%` : '—'),
+    },
     { accessor: 'receiptDate', header: 'Receipt Date' },
   ]
+
+  // Phase 5: Row-level lifecycle action buttons
+  const rowActions = (row) => {
+    const actions = []
+    if (hasRight(Rights.ROLE_AR_CLOSE) && row.arStatus === ArStatus.ALL_TESTS_COMPLETE) {
+      actions.push({
+        label: 'Close AR',
+        onClick: () => handleOpenLifecycle('close', row),
+        icon: CheckCircle,
+        variant: 'success',
+      })
+    }
+    if (hasRight(Rights.ROLE_AR_CANCEL) && (row.arStatus === ArStatus.REGISTERED || row.arStatus === ArStatus.IN_PROGRESS)) {
+      actions.push({
+        label: 'Cancel AR',
+        onClick: () => handleOpenLifecycle('cancel', row),
+        icon: XCircle,
+        variant: 'danger',
+      })
+    }
+    return actions
+  }
 
   const actions = []
   if (hasRight(Rights.ROLE_INWARD_CREATE)) {
@@ -154,6 +220,35 @@ export function InwardListPage() {
         onSuccess={fetchData}
         onToast={addToast}
       />
+
+      {/* Phase 5: AR Lifecycle confirmation modal */}
+      <Modal
+        open={lifecycleModalOpen}
+        onClose={() => setLifecycleModalOpen(false)}
+        title={lifecycleMode === 'close' ? 'Close AR' : 'Cancel AR'}
+        actions={[
+          { label: 'Cancel', onClick: () => setLifecycleModalOpen(false) },
+          {
+            label: lifecycleMode === 'close' ? 'Close AR' : 'Cancel AR',
+            onClick: handleLifecycleConfirm,
+            variant: lifecycleMode === 'close' ? 'success' : 'danger',
+          },
+        ]}
+      >
+        <p className="text-sm text-slate-600 mb-3">
+          {lifecycleMode === 'close'
+            ? 'Are you sure you want to close this AR? All tests must be in a terminal state.'
+            : 'Are you sure you want to cancel this AR? This action cannot be undone.'}
+        </p>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Reason (required)</label>
+        <textarea
+          value={lifecycleReason}
+          onChange={(e) => setLifecycleReason(e.target.value)}
+          rows={3}
+          className="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter reason for this action..."
+        />
+      </Modal>
     </div>
   )
 }

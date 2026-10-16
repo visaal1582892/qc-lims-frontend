@@ -21,3 +21,11 @@ export const ComplianceFlag = {
   FAIL: 'FAIL',
   PENDING: 'PENDING',
 }
+
+export const ArStatus = {
+  REGISTERED: 'REGISTERED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  ALL_TESTS_COMPLETE: 'ALL_TESTS_COMPLETE',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+}

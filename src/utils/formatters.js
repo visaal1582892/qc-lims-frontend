@@ -133,3 +133,22 @@ export function formatVarianceIndicator(allocated, consumed) {
   }
   return { classes: 'bg-rose-50 text-rose-700 ring-rose-200', label: `${variance} unconsumed`, variance }
 }
+
+/**
+ * Returns a Tailwind class string for an AR lifecycle status badge.
+ * @param {string} arStatus - AR lifecycle status (REGISTERED, IN_PROGRESS, ALL_TESTS_COMPLETE, COMPLETED, CANCELLED)
+ */
+export function formatArStatusBadge(arStatus) {
+  if (!arStatus) return 'bg-slate-50 text-slate-600 ring-slate-200'
+
+  const map = {
+    registered: 'bg-slate-50 text-slate-600 ring-slate-200',
+    in_progress: 'bg-sky-50 text-sky-700 ring-sky-200',
+    all_tests_complete: 'bg-violet-50 text-violet-700 ring-violet-200',
+    completed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+    cancelled: 'bg-rose-50 text-rose-700 ring-rose-200',
+  }
+
+  const key = arStatus.toLowerCase().replace(/\s+/g, '_')
+  return map[key] || 'bg-slate-50 text-slate-600 ring-slate-200'
+}
