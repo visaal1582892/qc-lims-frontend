@@ -85,11 +85,12 @@ function SearchTab() {
 
       const res = await analyticsApi.searchSamples(params)
       const response = res.data?.data ?? res.data
-      setData(response.content || [])
+      setData(response.items || response.content || [])
       setTotalPages(response.totalPages || 0)
       setTotalElements(response.totalElements || 0)
     } catch (err) {
       setError(err.message || 'Failed to load analytics data')
+      setData([])
     } finally {
       setLoading(false)
     }

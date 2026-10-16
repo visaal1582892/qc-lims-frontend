@@ -45,8 +45,8 @@ export function DataTable({ columns = [], data = [], loading = false }) {
           </tr>
           {/* Inline filter row */}
           <tr>
-            {columns.map((col) => (
-              <td key={`filter-${col.key}`} className={`px-2 py-1 border-b border-slate-100 bg-white ${col.stickyRight ? 'sticky right-0 z-[1] bg-slate-100' : ''}`} style={col.width ? { width: col.width } : undefined}>
+            {columns.map((col, colIndex) => (
+              <td key={`filter-${col.key ?? colIndex}`} className={`px-2 py-1 border-b border-slate-100 bg-white ${col.stickyRight ? 'sticky right-0 z-[1] bg-slate-100' : ''}`} style={col.width ? { width: col.width } : undefined}>
                 {col.filter !== false && !col.stickyRight && (
                   <input
                     type="text"

@@ -29,11 +29,11 @@ export function TestAllocationPage() {
     setLoading(true)
     try {
       const [allRes, pendingRes] = await Promise.all([
-        testExecutionApi.getAll().catch(() => ({ data: [] })),
-        testExecutionApi.getPending().catch(() => ({ data: [] })),
+        testExecutionApi.getAll().catch(() => ({ data: { data: [] } })),
+        testExecutionApi.getPending().catch(() => ({ data: { data: [] } })),
       ])
-      setExecutions(allRes.data ?? [])
-      setPendingItems(pendingRes.data ?? [])
+      setExecutions(allRes.data?.data ?? [])
+      setPendingItems(pendingRes.data?.data ?? [])
     } catch {
       // Errors handled by API client interceptor
     } finally {
