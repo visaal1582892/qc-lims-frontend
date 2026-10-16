@@ -36,4 +36,8 @@ export const Rights = {
 
   // Multi-Dimensional Analytics (Phase 8) — SRS Module 12.2
   ROLE_ANALYTICS_VIEW: 'ROLE_ANALYTICS_VIEW',
-}
+
+  // External Interface Hooks (Phase 9) — SRS Module 14
+  ROLE_EXTERNAL_TOS_TRIGGER: 'ROLE_EXTERNAL_TOS_TRIGGER',
+  ROLE_EXTERNAL_TOS_UPDATE: 'ROLE_EXTERNAL_TOS_UPDATE',
+};

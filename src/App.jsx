@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { TestParameterListPage } from './pages/testParameter/TestParameterListPage'
 import { InwardListPage } from './pages/inward/InwardListPage'
 import { TrfListPage } from './pages/trf/TrfListPage'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -35,6 +36,11 @@ function App() {
             <Route path={AppRoutes.TRF} element={
               <ProtectedRoute>
                 <TrfListPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.ANALYTICS} element={
+              <ProtectedRoute>
+                <AnalyticsPage />
               </ProtectedRoute>
             } />
           </Route>

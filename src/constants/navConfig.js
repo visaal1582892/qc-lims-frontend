@@ -32,4 +32,10 @@ export const navConfig = [
     icon: ClipboardList,
     right: Rights.ROLE_TRF_VIEW,
   },
+  {
+    label: 'Analytics',
+    path: '/analytics',
+    icon: BarChart3,
+    right: Rights.ROLE_ANALYTICS_VIEW,
+  },
 ]
