@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
-import { DashboardPage } from './pages/DashboardPage'
+import { QCDashboardPage } from './pages/dashboard/QCDashboardPage'
 import { TestParameterListPage } from './pages/testParameter/TestParameterListPage'
 import { InwardListPage } from './pages/inward/InwardListPage'
 import { TrfListPage } from './pages/trf/TrfListPage'
@@ -19,6 +19,7 @@ import { OosIncidentsPage } from './pages/oos/OosIncidentsPage'
 import { TrialTestsPage } from './pages/trialTests/TrialTestsPage'
 import { SubcontractRegisterPage } from './pages/subcontracting/SubcontractRegisterPage'
 import { DocumentRegistryPage } from './pages/documents/DocumentRegistryPage'
+import { MultiDimensionalTrackingPage } from './pages/tracking/MultiDimensionalTrackingPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -32,7 +33,7 @@ function App() {
           <Route element={<AppLayout />}>
             <Route path={AppRoutes.DASHBOARD} element={
               <ProtectedRoute>
-                <DashboardPage />
+                <QCDashboardPage />
               </ProtectedRoute>
             } />
             <Route path={AppRoutes.TEST_PARAMETERS} element={
@@ -123,6 +124,11 @@ function App() {
             <Route path={AppRoutes.DOCUMENT_REGISTRY} element={
               <ProtectedRoute>
                 <DocumentRegistryPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.TRACKING} element={
+              <ProtectedRoute>
+                <MultiDimensionalTrackingPage />
               </ProtectedRoute>
             } />
           </Route>

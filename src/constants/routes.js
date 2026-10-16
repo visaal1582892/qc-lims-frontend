@@ -36,4 +36,7 @@ export const Routes = {
 
   // Document Management (Phase 7) — SRS Module 11
   DOCUMENT_REGISTRY: '/documents',
+
+  // Multi-Dimensional Tracking (Phase 8) — SRS Module 12.2
+  TRACKING: '/tracking',
 }

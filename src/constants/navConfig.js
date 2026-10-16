@@ -1,4 +1,4 @@
-import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube, ShieldCheck, AlertTriangle, RotateCcw, Send, FileText } from 'lucide-react'
+import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube, ShieldCheck, AlertTriangle, RotateCcw, Send, FileText, Filter } from 'lucide-react'
 import { Rights } from './rights'
 
 /**
@@ -85,5 +85,11 @@ export const navConfig = [
     path: '/documents',
     icon: FileText,
     right: Rights.ROLE_DOCUMENT_VIEW,
+  },
+  {
+    label: 'Tracking',
+    path: '/tracking',
+    icon: Filter,
+    right: Rights.ROLE_DASHBOARD_VIEW,
   },
 ]
