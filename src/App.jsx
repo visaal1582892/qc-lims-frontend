@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from './auth/AuthContext'
+import { AuthProvider } from './auth/AuthProvider'
 import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { DashboardPage } from './pages/DashboardPage'
@@ -10,15 +10,10 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Redirect home to dashboard */}
           <Route path={AppRoutes.HOME} element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
+          <Route path={AppRoutes.LOGIN} element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
 
-          {/* Layout-wrapped routes */}
-          <Route element={<AppLayout><Routes><Route path={AppRoutes.DASHBOARD} element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } /></Routes></AppLayout>}>
+          <Route element={<AppLayout />}>
             <Route path={AppRoutes.DASHBOARD} element={
               <ProtectedRoute>
                 <DashboardPage />
@@ -26,7 +21,6 @@ function App() {
             } />
           </Route>
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to={AppRoutes.DASHBOARD} replace />} />
         </Routes>
       </BrowserRouter>

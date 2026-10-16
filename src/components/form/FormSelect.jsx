@@ -1,4 +1,3 @@
-import { useState } from 'react'
 
 /**
  * Design system form select component.

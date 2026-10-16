@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Bell, LayoutDashboard, ChevronLeft, ChevronRight, User } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { navConfig } from '../constants/navConfig'
-import { useAuth } from '../auth/AuthContext'
+import { useAuth } from '../auth/authContext'
 
 /**
  * Application shell layout with collapsible mini-sidebar.

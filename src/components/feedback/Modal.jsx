@@ -4,13 +4,6 @@ import { X } from 'lucide-react'
 /**
  * Accessible modal dialog component.
  * Follows UI spec Section 6.6 — backdrop, ESC dismiss, outside click dismiss.
- *
- * @param {boolean} open - Controls visibility
- * @param {function} onClose - Called on dismiss
- * @param {string} title - Modal title
- * @param {ReactNode} children - Modal body content
- * @param {ReactNode} footer - Optional footer actions
- * @param {string} size - 'sm' (max-w-sm), 'md' (max-w-lg), 'lg' (max-w-2xl), 'xl' (max-w-4xl)
  */
 export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
   useEffect(() => {
@@ -44,7 +37,6 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className={`relative w-full ${sizeClasses[size]} rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200/60 overflow-hidden`}>
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-lg font-semibold tracking-tight text-slate-900">{title}</h2>
           <button
@@ -55,11 +47,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
             <X className="h-4 w-4" />
           </button>
         </div>
-        {/* Body */}
         <div className="overflow-y-auto px-5 py-4 max-h-[calc(85vh-8rem)] text-sm text-slate-600">
           {children}
         </div>
-        {/* Footer */}
         {footer && (
           <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3.5">
             {footer}

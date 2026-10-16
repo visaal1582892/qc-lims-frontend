@@ -1,6 +1,5 @@
-import { createContext, useContext, useState, useCallback } from 'react'
-
-const AuthContext = createContext(null)
+import { useState, useCallback } from 'react'
+import { AuthContext } from './authContext'
 
 /**
  * Authentication context provider.
@@ -49,12 +48,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
 }

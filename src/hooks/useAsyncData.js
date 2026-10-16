@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 
 /**
  * Headless custom hook for async data fetching.
@@ -7,37 +7,32 @@ import { useState, useEffect, useCallback } from 'react'
  * @param {Function} fetchFn - Async function to execute
  * @param {Array} dependencies - Dependencies to trigger re-fetch
  */
-export function useAsyncData(fetchFn, dependencies = []) {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [cancelled, setCancelled] = useState(false)
+export function useAsyncData(fetchFn) {
+  const [state, setState] = useState({
+    data: null,
+    loading: true,
+    error: null,
+  })
 
-  const execute = useCallback(async () => {
-    setCancelled(false)
-    setLoading(true)
-    setError(null)
+  const refetch = useCallback(async () => {
+    setState((prev) => ({ ...prev, loading: true, error: null }))
     try {
       const response = await fetchFn()
-      if (!cancelled) {
-        setData(response.data ?? response)
-      }
+      setState((prev) => ({ ...prev, data: response.data ?? response, loading: false }))
     } catch (err) {
-      if (!cancelled) {
-        setError(err)
-      }
-    } finally {
-      if (!cancelled) {
-        setLoading(false)
-      }
+      setState((prev) => ({ ...prev, error: err, loading: false }))
     }
   }, [fetchFn])
 
-  useEffect(() => {
-    execute()
-    // Cleanup: flag stale state updates on unmount or dependency change
-    return () => setCancelled(true)
-  }, [...dependencies])
+  // Initial fetch
+  if (state.loading && state.data === null) {
+    refetch()
+  }
 
-  return { data, loading, error, refetch: execute }
+  return {
+    data: state.data,
+    loading: state.loading,
+    error: state.error,
+    refetch,
+  }
 }

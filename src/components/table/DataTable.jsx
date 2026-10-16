@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, MoreVertical } from 'lucide-react'
+import { Search } from 'lucide-react'
 
 /**
  * Enterprise data table with sticky headers, inline filters, and sticky action column.
@@ -33,7 +33,7 @@ export function DataTable({ columns = [], data = [], loading = false }) {
         <thead className="sticky top-0 z-20 bg-slate-50">
           {/* Header row */}
           <tr>
-            {columns.map((col, i) => (
+            {columns.map((col) => (
               <th
                 key={col.key}
                 className={`text-xs font-semibold uppercase tracking-wide text-slate-500 px-4 py-3 text-left border-b border-slate-200 ${col.stickyRight ? 'sticky right-0 z-30 bg-slate-200 text-right' : ''}`}
