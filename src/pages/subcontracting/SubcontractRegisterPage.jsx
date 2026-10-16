@@ -7,10 +7,12 @@
  * SRS Module 10: Subcontracting Module.
  */
 import { useState, useCallback, useEffect } from 'react'
-import { Send, RefreshCw, Search, Plus, FileText } from 'lucide-react'
+import { Send, RefreshCw, Search, Plus, FileText, X } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
 import { listSubcontracts, createSubcontract, updateSubcontract, markRoaReceived } from '../../api/subcontractingApi'
+import { useAuthRights } from '../../auth/useAuthRights'
+import { Rights } from '../../constants/rights'
 
 // Status filter options
 const statusFilters = [
@@ -57,6 +59,7 @@ export function SubcontractRegisterPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [toast, setToast] = useState(null)
+  const { hasRight } = useAuthRights()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -151,17 +154,23 @@ export function SubcontractRegisterPage() {
         description="Track samples dispatched to external laboratories"
         icon={Send}
         action={
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition-colors"
-            >
-              <Plus className="h-4 w-4" /> New Subcontract
-            </button>
+          hasRight(Rights.ROLE_SUBCONTRACT_CREATE) ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" /> New Subcontract
+              </button>
+              <button onClick={fetchData} className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors" title="Refresh">
+                <RefreshCw className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
             <button onClick={fetchData} className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors" title="Refresh">
               <RefreshCw className="h-4 w-4" />
             </button>
-          </div>
+          )
         }
       />
 
@@ -223,7 +232,13 @@ export function SubcontractRegisterPage() {
 /* --- Sub-components --- */
 
 function ActionCell({ subcontract, onRefresh, onToast }) {
+  const { hasRight } = useAuthRights()
+  const [showRemarksModal, setShowRemarksModal] = useState(false)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [remarksText, setRemarksText] = useState('')
+
   const handleUpdateStatus = async (newStatus) => {
+    if (!hasRight(Rights.ROLE_SUBCONTRACT_UPDATE)) return
     try {
       await updateSubcontract(subcontract.id, { status: newStatus })
       onToast(`Status updated to ${newStatus} for ${subcontract.subcontractNo}`)
@@ -233,27 +248,33 @@ function ActionCell({ subcontract, onRefresh, onToast }) {
     }
   }
 
-  const handleUpdateRemarks = async () => {
-    const remarks = prompt('Enter remarks:')
-    if (!remarks) return
+  const handleRoaReceived = async () => {
+    if (!hasRight(Rights.ROLE_SUBCONTRACT_UPDATE)) return
     try {
-      await updateSubcontract(subcontract.id, { remarks })
-      onToast(`Remarks updated for ${subcontract.subcontractNo}`)
+      await markRoaReceived(subcontract.id)
+      onToast(`ROA marked as received for ${subcontract.subcontractNo}`)
       onRefresh()
+      setShowConfirmModal(false)
     } catch (e) {
       onToast(`Failed: ${e.message || 'Unknown error'}`)
     }
   }
 
-  const handleRoaReceived = async () => {
-    if (!confirm(`Mark ROA as received for ${subcontract.subcontractNo}?`)) return
+  const handleRemarksSubmit = async () => {
+    if (!remarksText.trim()) return
     try {
-      await markRoaReceived(subcontract.id)
-      onToast(`ROA marked as received for ${subcontract.subcontractNo}`)
+      await updateSubcontract(subcontract.id, { remarks: remarksText.trim() })
+      onToast(`Remarks updated for ${subcontract.subcontractNo}`)
       onRefresh()
+      setShowRemarksModal(false)
+      setRemarksText('')
     } catch (e) {
       onToast(`Failed: ${e.message || 'Unknown error'}`)
     }
+  }
+
+  if (!hasRight(Rights.ROLE_SUBCONTRACT_UPDATE)) {
+    return null
   }
 
   return (
@@ -261,7 +282,7 @@ function ActionCell({ subcontract, onRefresh, onToast }) {
       {!subcontract.roaReceived && ['DISPATCHED', 'IN_PROGRESS'].includes(subcontract.subcontractStatus) && (
         <button
           className="rounded-md bg-green-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-green-700"
-          onClick={handleRoaReceived}
+          onClick={() => setShowConfirmModal(true)}
         >
           ROA Received
         </button>
@@ -277,13 +298,69 @@ function ActionCell({ subcontract, onRefresh, onToast }) {
       {['DISPATCHED', 'IN_PROGRESS'].includes(subcontract.subcontractStatus) && (
         <button
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-50"
-          onClick={handleUpdateRemarks}
+          onClick={() => setShowRemarksModal(true)}
         >
           Remarks
         </button>
       )}
       {['COMPLETED', 'CANCELLED'].includes(subcontract.subcontractStatus) && (
         <span className="text-[10px] text-slate-400">Closed</span>
+      )}
+
+      {/* Remarks Modal (replaces prompt) */}
+      {showRemarksModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Add Remarks</h3>
+              <button onClick={() => setShowRemarksModal(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="mb-3 text-xs text-slate-500">Subcontract: {subcontract.subcontractNo}</p>
+            <textarea
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+              rows={3}
+              placeholder="Enter remarks..."
+              value={remarksText}
+              onChange={(e) => setRemarksText(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button type="button" onClick={() => setShowRemarksModal(false)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button onClick={handleRemarksSubmit} className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700">
+                Save Remarks
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal (replaces confirm) */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-slate-900">Confirm ROA Received</h3>
+              <button onClick={() => setShowConfirmModal(false)} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-slate-600">
+              Mark ROA as received for <strong>{subcontract.subcontractNo}</strong>? This will update the status to COMPLETED.
+            </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setShowConfirmModal(false)} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                Cancel
+              </button>
+              <button onClick={handleRoaReceived} className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700">
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -324,7 +401,12 @@ function SubcontractFormModal({ onClose, onSuccess, onToast }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
-        <h3 className="mb-4 text-lg font-semibold text-slate-900">New Subcontract Entry</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">New Subcontract Entry</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-600">TRF ID (optional)</label>

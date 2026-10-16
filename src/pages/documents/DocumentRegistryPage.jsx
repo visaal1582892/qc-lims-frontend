@@ -5,10 +5,12 @@
  * Provides upload buttons for ROA and COA linked to AR records.
  */
 import { useState, useCallback, useEffect } from 'react'
-import { FileText, RefreshCw, Search, Upload, Download } from 'lucide-react'
+import { FileText, RefreshCw, Search, Upload, Download, X } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
 import { listDocuments, uploadRoa, uploadCoa, downloadDocument } from '../../api/subcontractingApi'
+import { useAuthRights } from '../../auth/useAuthRights'
+import { Rights } from '../../constants/rights'
 
 const typeColor = (type) => {
   switch (type) {
@@ -39,11 +41,12 @@ export function DocumentRegistryPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [toast, setToast] = useState(null)
+  const [uploadType, setUploadType] = useState(null) // 'ROA' or 'COA'
+  const { hasRight } = useAuthRights()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch all documents (no AR filter at top level — backend may need to support listing all)
       const res = await listDocuments().catch(() => ({ data: [] }))
       const data = (res.data || []).map((item) => item.data ?? item) ?? []
       setDocuments(data)
@@ -78,47 +81,8 @@ export function DocumentRegistryPage() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  const handleRoaUpload = async () => {
-    const arNumber = prompt('Enter AR Number for ROA upload:')
-    if (!arNumber) return
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.pdf'
-    input.onchange = async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-      try {
-        await uploadRoa('', file) // API expects executionId as param, arNumber as param
-        showToast(`ROA "${file.name}" uploaded for AR ${arNumber}`)
-        fetchData()
-      } catch (err) {
-        showToast(`Upload failed: ${err.message || 'Unknown error'}`)
-      }
-    }
-    input.click()
-  }
-
-  const handleCoaUpload = async () => {
-    const arNumber = prompt('Enter AR Number for COA upload:')
-    if (!arNumber) return
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.pdf'
-    input.onchange = async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-      try {
-        await uploadCoa(arNumber, file)
-        showToast(`COA "${file.name}" uploaded for AR ${arNumber}`)
-        fetchData()
-      } catch (err) {
-        showToast(`Upload failed: ${err.message || 'Unknown error'}`)
-      }
-    }
-    input.click()
-  }
-
   const handleDownload = async (fileId, fileName) => {
+    if (!hasRight(Rights.ROLE_DOCUMENT_VIEW)) return
     try {
       const blob = await downloadDocument(fileId)
       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
@@ -157,7 +121,7 @@ export function DocumentRegistryPage() {
       filter: false,
       stickyRight: true,
       width: 80,
-      render: (_val, row) => (
+      render: (_val, row) => hasRight(Rights.ROLE_DOCUMENT_VIEW) ? (
         <button
           className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-blue-700"
           onClick={() => handleDownload(row.id, row.fileName)}
@@ -165,7 +129,7 @@ export function DocumentRegistryPage() {
         >
           <Download className="h-3 w-3" />
         </button>
-      ),
+      ) : null,
     },
   ]
 
@@ -177,18 +141,22 @@ export function DocumentRegistryPage() {
         icon={FileText}
         action={
           <div className="flex gap-2">
-            <button
-              onClick={handleRoaUpload}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition-colors"
-            >
-              <Upload className="h-4 w-4" /> Upload ROA
-            </button>
-            <button
-              onClick={handleCoaUpload}
-              className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
-            >
-              <Upload className="h-4 w-4" /> Upload COA
-            </button>
+            {hasRight(Rights.ROLE_DOCUMENT_UPLOAD) && (
+              <>
+                <button
+                  onClick={() => setUploadType('ROA')}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 transition-colors"
+                >
+                  <Upload className="h-4 w-4" /> Upload ROA
+                </button>
+                <button
+                  onClick={() => setUploadType('COA')}
+                  className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+                >
+                  <Upload className="h-4 w-4" /> Upload COA
+                </button>
+              </>
+            )}
             <button onClick={fetchData} className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors" title="Refresh">
               <RefreshCw className="h-4 w-4" />
             </button>
@@ -220,12 +188,174 @@ export function DocumentRegistryPage() {
         loading={loading}
       />
 
+      {/* Upload Modal (replaces prompt + dynamic input) */}
+      {uploadType && (
+        <DocumentUploadModal
+          type={uploadType}
+          onClose={() => setUploadType(null)}
+          onSuccess={() => {
+            setUploadType(null)
+            fetchData()
+          }}
+          onToast={showToast}
+        />
+      )}
+
       {/* Toast */}
       {toast && (
         <div className="fixed bottom-4 right-4 z-50 rounded-lg bg-green-600 px-4 py-2 text-sm text-white shadow-lg animate-fade-in">
           {toast.message}
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * DocumentUploadModal — Replaces native prompt() + dynamic <input type="file">.
+ * Collects AR Number / Execution ID and file via proper form controls.
+ */
+function DocumentUploadModal({ type, onClose, onSuccess, onToast }) {
+  const [arNumber, setArNumber] = useState('')
+  const [executionId, setExecutionId] = useState('')
+  const [file, setFile] = useState(null)
+  const [fileDragOver, setFileDragOver] = useState(false)
+  const [uploading, setUploading] = useState(false)
+
+  const label = type === 'ROA' ? 'Record of Analysis (ROA)' : 'Certificate of Analysis (COA)'
+
+  const handleSubmit = async () => {
+    if (!file) {
+      onToast('Please select a PDF file')
+      return
+    }
+    if (type === 'ROA' && !executionId) {
+      onToast('Execution ID is required for ROA upload')
+      return
+    }
+    if (type === 'COA' && !arNumber) {
+      onToast('AR Number is required for COA upload')
+      return
+    }
+    setUploading(true)
+    try {
+      if (type === 'ROA') {
+        await uploadRoa(parseInt(executionId, 10), file)
+        onToast(`ROA "${file.name}" uploaded successfully`)
+      } else {
+        await uploadCoa(arNumber, file)
+        onToast(`COA "${file.name}" uploaded successfully`)
+      }
+      onSuccess()
+    } catch (err) {
+      onToast(`Upload failed: ${err.message || 'Unknown error'}`)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileSelect = (e) => {
+    const selected = e.target.files?.[0]
+    if (selected && selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
+      onToast('Only PDF files are allowed')
+      return
+    }
+    if (selected && selected.size > 25 * 1024 * 1024) {
+      onToast('File size exceeds 25 MB limit')
+      return
+    }
+    setFile(selected)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setFileDragOver(false)
+    const dropped = e.dataTransfer.files?.[0]
+    if (dropped && dropped.type !== 'application/pdf' && !dropped.name.toLowerCase().endsWith('.pdf')) {
+      onToast('Only PDF files are allowed')
+      return
+    }
+    if (dropped && dropped.size > 25 * 1024 * 1024) {
+      onToast('File size exceeds 25 MB limit')
+      return
+    }
+    setFile(dropped)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-slate-900">Upload {label}</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* ROA requires executionId; COA requires arNumber */}
+        {type === 'ROA' ? (
+          <div className="mb-4">
+            <label className="mb-1 block text-xs font-medium text-slate-600">Execution ID *</label>
+            <input
+              type="number"
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+              value={executionId}
+              onChange={(e) => setExecutionId(e.target.value)}
+              placeholder="e.g. 123"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <div className="mb-4">
+            <label className="mb-1 block text-xs font-medium text-slate-600">AR Number *</label>
+            <input
+              type="text"
+              className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+              value={arNumber}
+              onChange={(e) => setArNumber(e.target.value)}
+              placeholder="e.g. AR-2026-001"
+              autoFocus
+            />
+          </div>
+        )}
+
+        {/* Drop zone */}
+        <div
+          className={`relative mb-4 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+            fileDragOver ? 'border-primary-400 bg-primary-50' : 'border-slate-200 hover:border-slate-300'
+          }`}
+          onDragOver={(e) => { e.preventDefault(); setFileDragOver(true) }}
+          onDragLeave={() => setFileDragOver(false)}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            accept=".pdf,application/pdf"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            onChange={handleFileSelect}
+          />
+          {file ? (
+            <div className="text-sm">
+              <p className="font-medium text-slate-900">{file.name}</p>
+              <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+            </div>
+          ) : (
+            <div className="text-sm text-slate-500">
+              <p>Drag and drop a PDF file here, or click to browse</p>
+              <p className="text-xs mt-1">Max file size: 25 MB</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} disabled={uploading} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={handleSubmit} disabled={uploading} className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:opacity-50">
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
