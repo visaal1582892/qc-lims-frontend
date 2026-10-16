@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { CheckCircle, RotateCcw, X } from 'lucide-react'
-import { Modal } from '../../components/feedback/Modal'
+import { Modal } from '../../../components/feedback/Modal'
 
 /**
  * ReviewDecisionModal — Approve/Rework decision dialog.

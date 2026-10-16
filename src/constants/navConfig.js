@@ -66,7 +66,7 @@ export const navConfig = [
     label: 'OOS Incidents',
     path: '/oos-incidents',
     icon: AlertTriangle,
-    right: Rights.ROLE_OOS_INCIDENT_VIEW,
+    right: Rights.ROLE_OOS_VIEW,
   },
   {
     label: 'Trial Tests',
