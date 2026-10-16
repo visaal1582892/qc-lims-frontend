@@ -83,3 +83,53 @@ export function formatStatusDot(status) {
   const key = status.toLowerCase().replace(/\s+/g, '_')
   return map[key] || 'bg-slate-400'
 }
+
+/**
+ * Returns a Tailwind class string for a storage condition badge.
+ * Follows Tinted Badge pattern (UI spec).
+ * @param {string} location - Storage condition value
+ */
+export function formatStorageConditionBadge(location) {
+  if (!location) return 'bg-slate-50 text-slate-600 ring-slate-200'
+
+  const map = {
+    ambient: 'bg-amber-50 text-amber-700 ring-amber-200',
+    refrigerator: 'bg-sky-50 text-sky-700 ring-sky-200',
+    freezer: 'bg-indigo-50 text-indigo-700 ring-indigo-200',
+    others: 'bg-slate-50 text-slate-600 ring-slate-200',
+  }
+
+  const key = location.toLowerCase().replace(/\s+/g, '_')
+  return map[key] || 'bg-slate-50 text-slate-600 ring-slate-200'
+}
+
+/**
+ * Returns temperature range text for a storage condition.
+ */
+export function getTemperatureRange(location) {
+  if (!location) return ''
+  const map = {
+    ambient: 'Room temperature (20-25°C)',
+    refrigerator: 'Refrigerated (2-8°C)',
+    freezer: 'Frozen (-23 to -13°C)',
+    others: 'Other',
+  }
+  const key = location.toLowerCase().replace(/\s+/g, '_')
+  return map[key] || ''
+}
+
+/**
+ * Returns a variance indicator object with classes and label.
+ * @param {number} allocated - Allocated quantity
+ * @param {number} consumed - Consumed quantity
+ */
+export function formatVarianceIndicator(allocated, consumed) {
+  const variance = (allocated || 0) - (consumed || 0)
+  if (variance <= 0) {
+    return { classes: 'bg-emerald-50 text-emerald-700 ring-emerald-200', label: 'Fully consumed', variance }
+  }
+  if (variance <= 5) {
+    return { classes: 'bg-amber-50 text-amber-700 ring-amber-200', label: `${variance} unconsumed`, variance }
+  }
+  return { classes: 'bg-rose-50 text-rose-700 ring-rose-200', label: `${variance} unconsumed`, variance }
+}

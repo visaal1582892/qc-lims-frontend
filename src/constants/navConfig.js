@@ -1,4 +1,4 @@
-import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package } from 'lucide-react'
 import { Rights } from './rights'
 
 /**
@@ -37,5 +37,11 @@ export const navConfig = [
     path: '/analytics',
     icon: BarChart3,
     right: Rights.ROLE_ANALYTICS_VIEW,
+  },
+  {
+    label: 'QC Inventory',
+    path: '/inventory',
+    icon: Package,
+    right: Rights.ROLE_INVENTORY_READ,
   },
 ]
