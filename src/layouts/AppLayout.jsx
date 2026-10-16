@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, Outlet } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { navConfig } from '../constants/navConfig'
 import { useAuth } from '../auth/authContext'
@@ -12,7 +12,7 @@ import { useAuth } from '../auth/authContext'
  * - Hover width: 256px (w-64)
  * - Zero content shift: main content fixed offset
  */
-export function AppLayout({ children }) {
+export function AppLayout() {
   const [sidebarHover, setSidebarHover] = useState(false)
   const location = useLocation()
   const { user } = useAuth()
@@ -122,7 +122,7 @@ export function AppLayout({ children }) {
 
         {/* Page content */}
         <main className="flex-1 p-4 sm:p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>
