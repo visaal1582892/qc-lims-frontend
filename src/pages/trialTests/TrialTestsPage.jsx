@@ -22,7 +22,7 @@ export function TrialTestsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await inwardApi.getAllInwards().catch(() => ({ data: [] }))
+      const res = await inwardApi.getAll().catch(() => ({ data: [] }))
       const data = (res.data || []).map((item) => item.data ?? item) ?? []
       // Filter to only FOR_INFORMATION and related ARs
       const forInfoArs = data.filter((a) =>
