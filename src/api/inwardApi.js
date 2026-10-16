@@ -22,6 +22,11 @@ export const inwardApi = {
   searchByBatch: (batchNo) => api.get('/inward/search/batch', { params: { batchNo } }),
 
   /**
+   * List inward registrations by AR status (Active, For_Information, Closed, Rejected).
+   */
+  getByStatus: (arStatus) => api.get(`/inward/status/${arStatus}`),
+
+  /**
    * Create a new inward registration (AR number generated server-side).
    */
   create: (data) => api.post('/inward', data),

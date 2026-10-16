@@ -8,9 +8,8 @@ import { trfApi } from '../../api/trfApi'
  * Create/Update modal for e-TRF.
  * Covers Sections A-D per SRS 3.1.
  *
- * Note: In production this would be decomposed into 4 sub-components
- * (SectionA_CustomerDetails, SectionB_SampleParticulars, SectionC_AnalysisRequirements,
- * SectionD_PhysicalVerification) per the 350-line architecture rule.
+ * Includes all fields: isMsdsAttached, regulatoryFormType,
+ * otherSampleTypeDesc, submissionTypeDesc, otherMaterialTypeDesc, otherStorageDesc.
  */
 const materialTypeOptions = [
   { value: 'RM', label: 'Raw Material (RM)' },
@@ -77,9 +76,13 @@ const emptyForm = {
   isLightSensitive: false,
   isNonHazardous: false,
   isHazardous: false,
+  isMsdsAttached: false,
+  otherSampleTypeDesc: '',
   // Section C
   submissionType: '',
+  submissionTypeDesc: '',
   analysisType: '',
+  regulatoryFormType: '',
   pharmacopoeiaReference: '',
   stpDocumentNo: '',
   stpVersionNo: '',
@@ -117,8 +120,12 @@ export function TrfCreateModal({ open, onClose, mode = 'create', initialData, on
         isLightSensitive: initialData.isLightSensitive ?? false,
         isNonHazardous: initialData.isNonHazardous ?? false,
         isHazardous: initialData.isHazardous ?? false,
+        isMsdsAttached: initialData.isMsdsAttached ?? false,
+        otherSampleTypeDesc: initialData.otherSampleTypeDesc ?? '',
         submissionType: initialData.submissionType ?? '',
+        submissionTypeDesc: initialData.submissionTypeDesc ?? '',
         analysisType: initialData.analysisType ?? '',
+        regulatoryFormType: initialData.regulatoryFormType ?? '',
         pharmacopoeiaReference: initialData.pharmacopoeiaReference ?? '',
         stpDocumentNo: initialData.stpDocumentNo ?? '',
         stpVersionNo: initialData.stpVersionNo ?? '',
@@ -192,15 +199,18 @@ export function TrfCreateModal({ open, onClose, mode = 'create', initialData, on
         isLightSensitive: form.isLightSensitive,
         isNonHazardous: form.isNonHazardous,
         isHazardous: form.isHazardous,
+        isMsdsAttached: form.isMsdsAttached,
+        otherSampleTypeDesc: form.otherSampleTypeDesc || undefined,
         submissionType: form.submissionType || undefined,
+        submissionTypeDesc: form.submissionTypeDesc || undefined,
         analysisType: form.analysisType,
+        regulatoryFormType: form.regulatoryFormType || undefined,
         pharmacopoeiaReference: form.pharmacopoeiaReference,
         stpDocumentNo: form.stpDocumentNo || undefined,
         stpVersionNo: form.stpVersionNo || undefined,
         grnNumber: form.grnNumber || undefined,
         manufacturerId: form.manufacturerId ? parseInt(form.manufacturerId) : null,
         testParameterIds: form.testParameterIds,
-        submittedByUserId: null,
       }
 
       if (mode === 'create') {
@@ -219,9 +229,6 @@ export function TrfCreateModal({ open, onClose, mode = 'create', initialData, on
     }
   }
 
-  const sectionStyle = { marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid #e5e7eb' }
-  const sectionTitle = { fontWeight: 600, fontSize: 14, color: '#374151', marginBottom: 12 }
-
   return (
     <Modal
       open={open}
@@ -238,53 +245,78 @@ export function TrfCreateModal({ open, onClose, mode = 'create', initialData, on
       }
     >
       {/* Section A — Customer/Manufacturer */}
-      <div style={sectionStyle}>
-        <div style={sectionTitle}>A. Customer / Manufacturer Details</div>
-        <FormInput label="Company Name" value={form.companyName} onChange={(v) => handleChange('companyName', v)} error={errors.companyName} />
+      <div className="mb-5 pb-4 border-b border-slate-200">
+        <div className="font-semibold text-sm text-slate-700 mb-3">A. Customer / Manufacturer Details</div>
+        <FormInput label="Company Name" value={form.companyName} onChange={(v) => handleChange('companyName', v)} error={errors.companyName} required />
         <FormInput label="Address" value={form.companyAddress} onChange={(v) => handleChange('companyAddress', v)} />
-        <FormInput label="Manufacturing License No" value={form.manufacturingLicNo} onChange={(v) => handleChange('manufacturingLicNo', v)} error={errors.manufacturingLicNo} />
+        <FormInput label="Manufacturing License No" value={form.manufacturingLicNo} onChange={(v) => handleChange('manufacturingLicNo', v)} error={errors.manufacturingLicNo} required />
         <FormInput label="Contact Person" value={form.contactPersonName} onChange={(v) => handleChange('contactPersonName', v)} />
         <FormInput label="Phone/Mobile" value={form.phoneMobile} onChange={(v) => handleChange('phoneMobile', v)} />
         <FormInput label="Email" value={form.emailId} onChange={(v) => handleChange('emailId', v)} type="email" />
       </div>
 
       {/* Section B — Sample Particulars */}
-      <div style={sectionStyle}>
-        <div style={sectionTitle}>B. Sample Particulars</div>
+      <div className="mb-5 pb-4 border-b border-slate-200">
+        <div className="font-semibold text-sm text-slate-700 mb-3">B. Sample Particulars</div>
         <FormInput label="Product ID" value={form.productId} onChange={(v) => handleChange('productId', v)} error={errors.productId} type="number" />
         <FormInput label="Batch Numbers" value={form.batchNumbers} onChange={(v) => handleChange('batchNumbers', v)} error={errors.batchNumbers} />
         <FormInput label="Customer AR No" value={form.customerArNo} onChange={(v) => handleChange('customerArNo', v)} />
         <FormSelect label="Material Type" value={form.materialType} onChange={(v) => handleChange('materialType', v)} options={materialTypeOptions} />
+        {form.materialType === 'Others' && (
+          <FormInput label="Material Type (specify)" value={form.otherMaterialTypeDesc} onChange={(v) => handleChange('otherMaterialTypeDesc', v)} placeholder="Describe material type" />
+        )}
         <FormInput label="Mfg Date" value={form.mfgDate} onChange={(v) => handleChange('mfgDate', v)} error={errors.mfgDate} type="date" />
         <FormInput label="Expiry Date" value={form.expDate} onChange={(v) => handleChange('expDate', v)} error={errors.expDate} type="date" />
         <FormInput label="Retest Date" value={form.retestDate} onChange={(v) => handleChange('retestDate', v)} error={errors.retestDate} type="date" />
         <FormInput label="Batch Size" value={form.batchSize} onChange={(v) => handleChange('batchSize', v)} type="number" />
         <FormInput label="Sample Quantity" value={form.sampleQty} onChange={(v) => handleChange('sampleQty', v)} error={errors.sampleQty} type="number" />
         <FormSelect label="Storage Condition" value={form.storageCondition} onChange={(v) => handleChange('storageCondition', v)} options={storageConditionOptions} error={errors.storageCondition} />
-        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        {form.storageCondition === 'Others' && (
+          <FormInput label="Storage Condition (specify)" value={form.otherStorageDesc} onChange={(v) => handleChange('otherStorageDesc', v)} placeholder="Describe storage condition" />
+        )}
+        <div className="flex gap-4 flex-wrap">
+          <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={form.isHygroscopic} onChange={(e) => handleChange('isHygroscopic', e.target.checked)} /> Hygroscopic
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={form.isLightSensitive} onChange={(e) => handleChange('isLightSensitive', e.target.checked)} /> Light Sensitive
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={form.isNonHazardous} onChange={(e) => handleChange('isNonHazardous', e.target.checked)} /> Non-Hazardous
           </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <label className="flex items-center gap-1.5">
             <input type="checkbox" checked={form.isHazardous} onChange={(e) => handleChange('isHazardous', e.target.checked)} /> Hazardous
           </label>
+          <label className="flex items-center gap-1.5">
+            <input type="checkbox" checked={form.isMsdsAttached} onChange={(e) => handleChange('isMsdsAttached', e.target.checked)} /> MSDS Attached
+          </label>
         </div>
+        {form.isHazardous && (
+          <FormInput label="Other Sample Type Description" value={form.otherSampleTypeDesc} onChange={(v) => handleChange('otherSampleTypeDesc', v)} placeholder="Describe sample type" />
+        )}
       </div>
 
       {/* Section C — Analysis Requirements */}
-      <div style={sectionStyle}>
-        <div style={sectionTitle}>C. Analysis Requirements</div>
+      <div className="mb-5 pb-4 border-b border-slate-200">
+        <div className="font-semibold text-sm text-slate-700 mb-3">C. Analysis Requirements</div>
         <FormSelect label="Analysis Type" value={form.analysisType} onChange={(v) => handleChange('analysisType', v)} options={analysisTypeOptions} error={errors.analysisType} />
+        {form.analysisType === 'Regulatory' && (
+          <FormInput label="Regulatory Form Type" value={form.regulatoryFormType} onChange={(v) => handleChange('regulatoryFormType', v)} placeholder="e.g., ANDA, NDA, 505(b)(2)" />
+        )}
         <FormSelect label="Pharmacopoeia Reference" value={form.pharmacopoeiaReference} onChange={(v) => handleChange('pharmacopoeiaReference', v)} options={pharmacopoeiaOptions} error={errors.pharmacopoeiaReference} />
         <FormInput label="STP Document No" value={form.stpDocumentNo} onChange={(v) => handleChange('stpDocumentNo', v)} />
         <FormInput label="STP Version No" value={form.stpVersionNo} onChange={(v) => handleChange('stpVersionNo', v)} />
         <FormSelect label="Submission Type" value={form.submissionType} onChange={(v) => handleChange('submissionType', v)} options={submissionTypeOptions} />
+        {form.submissionType === 'Others' && (
+          <FormInput label="Submission Type (specify)" value={form.submissionTypeDesc} onChange={(v) => handleChange('submissionTypeDesc', v)} placeholder="Describe submission type" />
+        )}
+      </div>
+
+      {/* Section D — Reference */}
+      <div>
+        <div className="font-semibold text-sm text-slate-700 mb-3">D. Reference Information</div>
+        <FormInput label="GRN Number" value={form.grnNumber} onChange={(v) => handleChange('grnNumber', v)} />
+        <FormInput label="Manufacturer ID" value={form.manufacturerId} onChange={(v) => handleChange('manufacturerId', v)} type="number" />
       </div>
     </Modal>
   )

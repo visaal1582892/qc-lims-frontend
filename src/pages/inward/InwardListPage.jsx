@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Filter } from 'lucide-react'
 import { PageHeader } from '../../components/layout/PageHeader'
 import { DataTable } from '../../components/table/DataTable'
 import { InwardCreateModal } from './InwardCreateModal'
@@ -9,6 +9,7 @@ import { Rights } from '../../constants/rights'
 
 /**
  * Inward Registration list page — Tier 3 Page Container.
+ * M-4: Includes status filter dropdown.
  */
 export function InwardListPage() {
   const { hasRight } = useAuthRights()
@@ -20,6 +21,10 @@ export function InwardListPage() {
   const [modalMode, setModalMode] = useState('create')
   const [editingRow, setEditingRow] = useState(null)
   const [toast, setToast] = useState(null)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
+
+  const arStatusOptions = ['Active', 'For_Information', 'Closed', 'Rejected']
 
   const addToast = useCallback((t) => {
     setToast(t)
@@ -31,14 +36,20 @@ export function InwardListPage() {
     setError(null)
     try {
       const res = await inwardApi.getAll()
-      setData(res.data?.data ?? [])
+      const allData = res.data?.data ?? []
+      // Client-side filter for status
+      if (statusFilter) {
+        setData(allData.filter((r) => r.arStatus === statusFilter))
+      } else {
+        setData(allData)
+      }
     } catch (err) {
       setError(err.message ?? 'Failed to load inward records')
       addToast({ message: 'Failed to load inward records', type: 'error' })
     } finally {
       setLoading(false)
     }
-  }, [addToast])
+  }, [addToast, statusFilter])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -87,7 +98,41 @@ export function InwardListPage() {
         subtitle="Manage sample inward registrations and AR numbers"
         actions={actions}
       />
-      {error && <p style={{ color: '#ef4444' }}>{error}</p>}
+      {/* M-4: Status filter bar */}
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          type="button"
+          onClick={() => setFilterOpen(!filterOpen)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition"
+        >
+          <Filter className="w-3.5 h-3.5" />
+          {statusFilter || 'Filter by Status'}
+        </button>
+        {filterOpen && (
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value); setFilterOpen(false) }}
+              className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 bg-white shadow-sm"
+            >
+              <option value="">All Statuses</option>
+              {arStatusOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        {statusFilter && (
+          <button
+            type="button"
+            onClick={() => setStatusFilter('')}
+            className="text-xs text-slate-500 hover:text-slate-700 underline"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
+      {error && <p className="text-sm text-rose-500">{error}</p>}
       <DataTable
         columns={columns}
         data={data}
@@ -96,11 +141,8 @@ export function InwardListPage() {
         onDelete={hasRight(Rights.ROLE_INWARD_DELETE) ? handleDelete : undefined}
       />
       {toast && (
-        <div style={{
-          position: 'fixed', bottom: 16, right: 16, padding: '8px 16px',
-          background: toast.type === 'error' ? '#ef4444' : '#22c55e',
-          color: '#fff', borderRadius: 6,
-        }}>
+        <div className="fixed bottom-4 right-4 px-4 py-2 rounded-lg text-sm font-medium text-white"
+          style={{ background: toast.type === 'error' ? '#ef4444' : '#22c55e' }}>
           {toast.message}
         </div>
       )}
