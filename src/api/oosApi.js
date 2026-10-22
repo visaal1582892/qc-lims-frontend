@@ -29,6 +29,14 @@ export const oosApi = {
   getOosIncidentsByAr: (arNumber) =>
     client.get(`/v1/oos-incidents/by-ar/${arNumber}`),
 
+  /** OIS-07: Manually raise an OOS incident */
+  raiseOosIncident: (data) =>
+    client.post('/v1/oos-incidents/raise', data),
+
+  /** OIS-08: Submit investigation findings */
+  investigateOos: (id, data) =>
+    client.post(`/v1/oos-incidents/${id}/investigate`, data),
+
   /** TT-01: Mark AR as For_Information */
   markForInformation: (arNumber, reason) =>
     client.post(`/v1/trial-tests/${arNumber}/mark-for-information`, null, {

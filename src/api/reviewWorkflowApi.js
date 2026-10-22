@@ -31,4 +31,9 @@ export const reviewWorkflowApi = {
    * Get review history (audit trail) for an execution.
    */
   getReviewHistory: (executionId) => api.get(`/v1/reviews/${executionId}/history`),
+
+  /**
+   * Get full audit log for all review actions.
+   */
+  getAuditLog: () => api.get('/v1/reviews/audit-log'),
 }

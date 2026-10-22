@@ -39,4 +39,7 @@ export const Routes = {
 
   // Multi-Dimensional Tracking (Phase 8) — SRS Module 12.2
   TRACKING: '/tracking',
+
+  // Receipt Checklist (Module 3.2) — Physical Verification
+  RECEIPT_CHECKLIST: '/receipt-checklist',
 }

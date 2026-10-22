@@ -20,6 +20,7 @@ import { TrialTestsPage } from './pages/trialTests/TrialTestsPage'
 import { SubcontractRegisterPage } from './pages/subcontracting/SubcontractRegisterPage'
 import { DocumentRegistryPage } from './pages/documents/DocumentRegistryPage'
 import { MultiDimensionalTrackingPage } from './pages/tracking/MultiDimensionalTrackingPage'
+import { ReceiptChecklistPage } from './pages/receiptChecklist/ReceiptChecklistPage'
 import { Routes as AppRoutes } from './constants/routes'
 
 function App() {
@@ -129,6 +130,11 @@ function App() {
             <Route path={AppRoutes.TRACKING} element={
               <ProtectedRoute>
                 <MultiDimensionalTrackingPage />
+              </ProtectedRoute>
+            } />
+            <Route path={AppRoutes.RECEIPT_CHECKLIST} element={
+              <ProtectedRoute>
+                <ReceiptChecklistPage />
               </ProtectedRoute>
             } />
           </Route>

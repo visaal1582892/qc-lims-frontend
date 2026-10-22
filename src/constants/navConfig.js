@@ -1,4 +1,4 @@
-import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube, ShieldCheck, AlertTriangle, RotateCcw, Send, FileText, Filter } from 'lucide-react'
+import { LayoutDashboard, FlaskConical, Truck, ClipboardList, BarChart3, Package, TestTube, ShieldCheck, AlertTriangle, RotateCcw, Send, FileText, Filter, ClipboardCheck } from 'lucide-react'
 import { Rights } from './rights'
 
 /**
@@ -91,5 +91,11 @@ export const navConfig = [
     path: '/tracking',
     icon: Filter,
     right: Rights.ROLE_DASHBOARD_VIEW,
+  },
+  {
+    label: 'Receipt Checklist',
+    path: '/receipt-checklist',
+    icon: ClipboardCheck,
+    right: Rights.ROLE_RECEIPT_CHECKLIST_VIEW,
   },
 ]
