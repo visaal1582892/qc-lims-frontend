@@ -2,11 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { logout as logoutThunk } from '../store/slices/authSlice'
 
-/**
- * Redux-backed auth hook for QC LIMS.
- * Provides user info, roles, rights, and rights-based access checks.
- * Follows marketing-automation convention: all authorization checks use user.rights.
- */
 export default function useAuth() {
   const { token, user, isAuthenticated, loading } = useSelector((state) => state.auth)
   const dispatch = useDispatch()
@@ -73,3 +68,5 @@ export default function useAuth() {
     logout,
   }
 }
+
+export { useAuth }
