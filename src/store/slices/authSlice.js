@@ -7,11 +7,12 @@ import api from '../../api/client'
 
 export const login = createAsyncThunk(
   'auth/login',
-  async ({ username, password }, { rejectWithValue }) => {
+  async ({ employeeId, password }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/login', { username, password })
+      const response = await api.post('/auth/login', { employeeId, password })
       const { token, user } = response.data
       localStorage.setItem('authToken', token)
+      localStorage.setItem('user', JSON.stringify(user))
       return { token, user }
     } catch (error) {
       return rejectWithValue(
@@ -23,8 +24,7 @@ export const login = createAsyncThunk(
 
 export const logout = createAsyncThunk('auth/logout', async () => {
   localStorage.removeItem('authToken')
-  // Optionally call backend logout endpoint:
-  // await api.post('/auth/logout')
+  localStorage.removeItem('user')
 })
 
 // ---------------------------------------------------------------------------
@@ -67,7 +67,6 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.user = action.payload.user
         state.isAuthenticated = true
-        localStorage.setItem('user', JSON.stringify(action.payload.user))
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false

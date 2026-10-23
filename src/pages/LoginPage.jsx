@@ -1,0 +1,176 @@
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import { login as loginThunk } from '../store/slices/authSlice'
+
+export default function LoginPage() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { isAuthenticated, loading } = useSelector((state) => state.auth)
+  const from = location.state?.from?.pathname || '/dashboard'
+
+  const [employeeId, setEmployeeId]   = useState('')
+  const [password, setPassword]       = useState('')
+  const [showPwd, setShowPwd]         = useState(false)
+  const [submitting, setSubmitting]   = useState(false)
+  const [error, setError]             = useState('')
+
+  useEffect(() => {
+    if (isAuthenticated) navigate(from, { replace: true })
+  }, [isAuthenticated, navigate, from])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setSubmitting(true)
+    try {
+      await dispatch(loginThunk({ employeeId, password })).unwrap()
+      navigate(from, { replace: true })
+    } catch (err) {
+      setError(err || 'Unable to sign in. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="relative flex min-h-screen items-stretch bg-white">
+      {/* Left visual panel */}
+      <aside className="relative hidden flex-1 overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 lg:flex">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -left-20 h-72 w-72 rounded-full bg-white/8 blur-3xl" />
+          <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 flex flex-col justify-between p-12 text-white">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">QC LIMS</h1>
+            <p className="mt-1 text-sm text-white/70">Quality Control Laboratory Information Management System</p>
+          </div>
+
+          <div className="max-w-sm">
+            <h2 className="text-2xl font-bold leading-tight tracking-tight">
+              Streamline your quality control workflows.
+            </h2>
+            <p className="mt-4 text-sm leading-relaxed text-white/70">
+              End-to-end sample management, testing, and reporting — built for modern QC laboratories.
+            </p>
+            <ul className="mt-8 space-y-3">
+              {[
+                'Sample tracking and inward management',
+                'Test result recording and review',
+                'Certificate and TRF generation',
+                'OOS/OOT investigation workflows',
+                'Audit trail and compliance reporting',
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm text-white/85">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-cyan-400/80 text-white">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                      <path fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z"
+                            clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-xs text-white/40">
+            © {new Date().getFullYear()} MedPlus Health Services. All rights reserved.
+          </p>
+        </div>
+      </aside>
+
+      {/* Right form panel */}
+      <main className="relative flex w-full flex-col items-center justify-center bg-slate-50 px-4 py-10 sm:px-6 lg:max-w-[460px] lg:bg-white lg:px-12">
+        <div className="w-full max-w-sm">
+          {/* Mobile header */}
+          <div className="mb-8 flex flex-col items-center lg:hidden">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">QC LIMS</h1>
+            <p className="mt-1 text-sm text-slate-500">Sign in to your workspace</p>
+          </div>
+
+          {/* Desktop heading */}
+          <div className="mb-8 hidden lg:block">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-blue-600">QC LIMS</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
+            <p className="mt-1.5 text-sm text-slate-500">
+              Sign in with your employee ID and password.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                Employee ID
+              </label>
+              <input
+                type="text"
+                required
+                value={employeeId}
+                autoComplete="username"
+                onChange={(e) => setEmployeeId(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5
+                           text-sm text-slate-900 shadow-sm transition
+                           placeholder:text-slate-400
+                           focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="Enter your employee ID"
+              />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-semibold text-slate-600">Password</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPwd((s) => !s)}
+                  className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                >
+                  {showPwd ? 'Hide' : 'Show'}
+                </button>
+              </div>
+              <input
+                type={showPwd ? 'text' : 'password'}
+                required
+                value={password}
+                autoComplete="current-password"
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5
+                           text-sm text-slate-900 shadow-sm transition
+                           placeholder:text-slate-400
+                           focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="••••••••"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting || loading}
+              className="flex w-full items-center justify-center rounded-xl
+                         bg-blue-600 px-4 py-2.5 text-sm font-bold text-white
+                         shadow-sm shadow-blue-200 transition-all duration-200
+                         hover:bg-blue-700 hover:shadow-md hover:shadow-blue-200
+                         focus:outline-none focus:ring-2 focus:ring-blue-300
+                         active:scale-[0.99] disabled:opacity-60"
+            >
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-xs text-slate-400 lg:hidden">
+            © {new Date().getFullYear()} MedPlus Health Services
+          </p>
+        </div>
+      </main>
+    </div>
+  )
+}
