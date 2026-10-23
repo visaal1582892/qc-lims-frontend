@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, Outlet } from 'react-router-dom'
 import {
   LayoutDashboard,
   Settings,
@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { label: 'Masters', to: '/masters', icon: Settings },
 ]
 
-export default function AppLayout({ children }) {
+export default function AppLayout() {
   const { user, logout, hasRight } = useAuth()
   const location = useLocation()
 
@@ -77,9 +77,9 @@ export default function AppLayout({ children }) {
           </h1>
         </header>
 
-        {/* Page content */}
+        {/* Page content — child routes render here */}
         <div className="p-6">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>

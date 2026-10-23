@@ -15,26 +15,17 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Routes>
-                  <Route path="dashboard" element={<DashboardPage />} />
-                  <Route path="masters" element={<MasterHubPage />} />
-                  <Route path="masters/metric-units" element={<MetricUnitsPage />} />
-                  <Route path="masters/test-parameters" element={<TestParametersPage />} />
-                  <Route path="masters/analyst-qualifications" element={<AnalystQualificationsPage />} />
-                  <Route path="masters/inventory-config" element={<InventoryConfigPage />} />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="masters" element={<MasterHubPage />} />
+          <Route path="masters/metric-units" element={<MetricUnitsPage />} />
+          <Route path="masters/test-parameters" element={<TestParametersPage />} />
+          <Route path="masters/analyst-qualifications" element={<AnalystQualificationsPage />} />
+          <Route path="masters/inventory-config" element={<InventoryConfigPage />} />
+        </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
