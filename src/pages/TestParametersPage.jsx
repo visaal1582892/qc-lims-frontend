@@ -23,6 +23,7 @@ export default function TestParametersPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [showUpload, setShowUpload] = useState(false)
+  const [error, setError] = useState(null)
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -40,6 +41,7 @@ export default function TestParametersPage() {
         setTotalElements(res.data.totalElements || 0)
       }
     } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to load test parameters')
       console.error('Failed to load test parameters:', err)
     } finally {
       setLoading(false)
@@ -148,7 +150,9 @@ export default function TestParametersPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+              ) : error ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-red-600">{error}</td></tr>
               ) : items.length === 0 ? (
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">No test parameters found.</td></tr>
               ) : (

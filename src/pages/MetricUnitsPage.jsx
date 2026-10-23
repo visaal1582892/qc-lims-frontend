@@ -24,6 +24,7 @@ export default function MetricUnitsPage() {
   const [totalPages, setTotalPages] = useState(0)
   const [totalElements, setTotalElements] = useState(0)
   const [showUpload, setShowUpload] = useState(false)
+  const [error, setError] = useState(null)
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
@@ -41,6 +42,7 @@ export default function MetricUnitsPage() {
         setTotalElements(res.data.totalElements || 0)
       }
     } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Failed to load metric units')
       console.error('Failed to load metric units:', err)
     } finally {
       setLoading(false)
@@ -142,7 +144,7 @@ export default function MetricUnitsPage() {
               <tr className="border-b border-slate-100 bg-slate-50/50">
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">#</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Code</th>
+                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Sub Name</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Status</th>
                 <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Created</th>
               </tr>
@@ -150,6 +152,8 @@ export default function MetricUnitsPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
+              ) : error ? (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-red-600">{error}</td></tr>
               ) : items.length === 0 ? (
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">No metric units found.</td></tr>
               ) : (
@@ -157,7 +161,7 @@ export default function MetricUnitsPage() {
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-4 py-3 text-slate-400">{page * 15 + idx + 1}</td>
                     <td className="px-4 py-3 font-medium text-slate-800">{item.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.code || '-'}</td>
+                    <td className="px-4 py-3 text-slate-600">{item.subName || '-'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium
                         ${item.status === 'ACTIVE' || item.status === 'A'
