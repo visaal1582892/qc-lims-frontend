@@ -4,6 +4,8 @@ import DashboardPage from './pages/DashboardPage'
 import MasterHubPage from './pages/MasterHubPage'
 import MetricUnitsPage from './pages/MetricUnitsPage'
 import TestParametersPage from './pages/TestParametersPage'
+import AnalystQualificationsPage from './pages/AnalystQualificationsPage'
+import InventoryConfigPage from './pages/InventoryConfigPage'
 import ProtectedRoute from './auth/ProtectedRoute'
 import AppLayout from './layouts/AppLayout'
 
@@ -23,6 +25,8 @@ function App() {
                   <Route path="masters" element={<MasterHubPage />} />
                   <Route path="masters/metric-units" element={<MetricUnitsPage />} />
                   <Route path="masters/test-parameters" element={<TestParametersPage />} />
+                  <Route path="masters/analyst-qualifications" element={<AnalystQualificationsPage />} />
+                  <Route path="masters/inventory-config" element={<InventoryConfigPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </AppLayout>

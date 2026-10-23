@@ -24,4 +24,28 @@ export const mastersApi = {
     },
     downloadTestParameterTemplate: () =>
         api.get('/masters/test-parameters/template', { responseType: 'blob' }),
+
+    // Analyst Qualification
+    getAnalystQualifications: (params = {}) => api.get('/masters/analyst-qualifications', { params }),
+    uploadAnalystQualifications: (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        return api.post('/masters/analyst-qualifications', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    downloadAnalystQualificationTemplate: () =>
+        api.get('/masters/analyst-qualifications/template', { responseType: 'blob' }),
+
+    // Inventory Configuration
+    getInventoryConfig: (params = {}) => api.get('/masters/inventory-config', { params }),
+    uploadInventoryConfig: (file) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        return api.post('/masters/inventory-config', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        })
+    },
+    downloadInventoryConfigTemplate: () =>
+        api.get('/masters/inventory-config/template', { responseType: 'blob' }),
 }
