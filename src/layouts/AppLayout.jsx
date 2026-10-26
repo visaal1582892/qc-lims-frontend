@@ -1,28 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { masterHubConfig } from '../config/masterHubConfig'
 import Icon from '../components/Icon'
 import Logo from '../components/Logo'
 
 /**
- * AppLayout — replicates the marketing-automation frontend sidebar & header exactly.
+ * AppLayout — replicates the marketing-automation frontend sidebar & header.
  *
  * - Hover-based sidebar expansion (white sidebar, 72px collapsed → 256px expanded)
  * - Section headers with labels when expanded, dividers when collapsed
- * - Inline SVG tooltips on hover in collapsed mode
+ * - Inline tooltips on hover in collapsed mode
  * - Profile dropdown with gradient avatar
  * - Active link indicator (left bar + gradient bg)
  * - Sign-out button in sidebar footer with collapsed tooltip
+ * - Single "Masters" nav link → opens MasterHubPage (no sub-navigation)
  */
+
+const OVERVIEW_NAV_LINKS = [
+  { to: '/dashboard', label: 'Dashboard', icon: 'layoutDashboard' },
+]
+
+const ADMIN_NAV_LINKS = [
+  { to: '/masters', label: 'Masters', icon: 'cog', rights: ['ROLE_MASTER_DATA_READ', 'ROLE_MASTER_DATA_CREATE', 'ROLE_MASTER_DATA_UPDATE', 'ROLE_MASTER_DATA_DELETE', 'ROLE_METRIC_UNIT_READ', 'ROLE_TEST_PARAMETER_READ', 'ROLE_QUALIFICATION_READ', 'ROLE_INVENTORY_CONFIG_READ'] },
+]
+
 export default function AppLayout() {
-  const { user, logout } = useAuth()
+  const { user, logout, hasRight } = useAuth()
   const location = useLocation()
 
   const [hovered, setHovered]     = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [mastersOpen, setMastersOpen] = useState(true)
 
   const profileMenuRef = useRef(null)
 
@@ -40,12 +48,20 @@ export default function AppLayout() {
   const sidebarWidth = (hovered || mobileOpen) ? 'w-64' : 'w-[72px]'
   const padded       = hovered ? 'lg:pl-64' : 'lg:pl-[72px]'
 
+  // Filter nav links by user rights
+  const visibleOverview = useMemo(() => OVERVIEW_NAV_LINKS, [])
+  const visibleAdmin = useMemo(() => {
+    return ADMIN_NAV_LINKS.filter((item) => {
+      if (!item.rights) return true
+      return item.rights.some((r) => hasRight(r))
+    })
+  }, [hasRight])
+
   // Determine header title from route
   const navHeader = useMemo(() => {
     if (location.pathname === '/masters') return 'Master Hub'
     if (location.pathname === '/dashboard') return 'Dashboard'
-    const page = masterHubConfig.find((c) => c.path === location.pathname)
-    if (page) return page.title
+    if (location.pathname.startsWith('/masters/')) return 'Master Data'
     return 'QC LIMS'
   }, [location.pathname])
 
@@ -86,45 +102,43 @@ export default function AppLayout() {
         {/* Nav */}
         <nav className={`flex-1 overflow-hidden overflow-y-auto py-2.5 ${collapsed ? 'px-2 space-y-2' : 'px-2.5 space-y-3'}`}>
           {/* Section 1: Overview */}
-          <div className="space-y-0.5">
-            <SidebarLink
-              to="/dashboard"
-              label="Dashboard"
-              icon="layoutDashboard"
-              collapsed={collapsed}
-            />
-          </div>
-
-          {/* Section 2: Masters */}
-          <div>
-            {!collapsed ? (
-              <div className="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
-                Masters
-              </div>
-            ) : (
-              <div className="my-1.5 mx-2 border-t border-slate-200/80" />
-            )}
-
-            {/* Masters group */}
-            <SidebarGroup
-              label="Masters"
-              icon="database"
-              collapsed={collapsed}
-              open={mastersOpen}
-              onToggle={() => setMastersOpen(!mastersOpen)}
-            >
-              {masterHubConfig.map((item) => (
+          {visibleOverview.length > 0 && (
+            <div className="space-y-0.5">
+              {visibleOverview.map(item => (
                 <SidebarLink
-                  key={item.path}
-                  to={item.path}
-                  label={item.title}
+                  key={item.to}
+                  to={item.to}
+                  label={item.label}
                   icon={item.icon}
                   collapsed={collapsed}
-                  nested
                 />
               ))}
-            </SidebarGroup>
-          </div>
+            </div>
+          )}
+
+          {/* Section 2: Masters */}
+          {visibleAdmin.length > 0 && (
+            <div>
+              {!collapsed ? (
+                <div className="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
+                  Masters
+                </div>
+              ) : (
+                <div className="my-1.5 mx-2 border-t border-slate-200/80" />
+              )}
+              <div className="space-y-0.5">
+                {visibleAdmin.map(item => (
+                  <SidebarLink
+                    key={item.to}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    collapsed={collapsed}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Footer: sign out */}
@@ -250,20 +264,16 @@ export default function AppLayout() {
 /* Sidebar primitives (from marketing-automation)                     */
 /* ----------------------------------------------------------------- */
 
-function SidebarLink({ to, label, icon, collapsed, nested = false }) {
+function SidebarLink({ to, label, icon, collapsed }) {
   return (
     <NavLink
       to={to}
-      end={!nested}
+      end
       className={({ isActive }) =>
         `group relative flex items-center transition-all duration-150 select-none ${
           collapsed
             ? 'mx-auto justify-center h-9 w-9 rounded-xl my-0.5'
-            : `rounded-lg my-0.5 ${
-                nested
-                  ? 'px-3 py-1.5 text-[13px] ml-2'
-                  : 'px-3 py-2 text-[13.5px] font-medium'
-              }`
+            : 'rounded-lg my-0.5 px-3 py-2 text-[13.5px] font-medium'
         } ${
           isActive
             ? collapsed
@@ -290,13 +300,7 @@ function SidebarLink({ to, label, icon, collapsed, nested = false }) {
           >
             <Icon
               name={icon}
-              className={
-                collapsed
-                  ? 'h-[18px] w-[18px]'
-                  : nested
-                  ? 'h-[15.5px] w-[15.5px]'
-                  : 'h-[17.5px] w-[17.5px]'
-              }
+              className={collapsed ? 'h-[18px] w-[18px]' : 'h-[17.5px] w-[17.5px]'}
             />
           </span>
 
@@ -317,56 +321,5 @@ function SidebarLink({ to, label, icon, collapsed, nested = false }) {
         </>
       )}
     </NavLink>
-  )
-}
-
-function SidebarGroup({ label, icon, collapsed, open, onToggle, children }) {
-  if (collapsed) {
-    return (
-      <div className="py-1">
-        <div className="group relative mx-auto flex justify-center">
-          <button
-            onClick={onToggle}
-            className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-150 ${
-              open
-                ? 'bg-slate-100 text-brand-600 font-medium'
-                : 'text-slate-400 hover:bg-slate-100/80 hover:text-slate-700'
-            }`}
-          >
-            <Icon name={icon} className="h-[18px] w-[18px]" />
-          </button>
-          {/* Tooltip for section group header */}
-          <div className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 hidden group-hover:flex items-center">
-            <div className="relative rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl whitespace-nowrap">
-              {label}
-              <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
-            </div>
-          </div>
-        </div>
-        {open && <div className="mt-1 space-y-0.5">{children}</div>}
-      </div>
-    )
-  }
-
-  return (
-    <div className="pt-3 pb-0.5">
-      <button
-        onClick={onToggle}
-        className="group flex w-full select-none items-center justify-between px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider text-slate-400 transition-colors hover:text-slate-600"
-      >
-        <span>{label}</span>
-        <Icon
-          name="chevronRight"
-          className={`h-3 w-3 text-slate-400 transition-transform duration-200 group-hover:text-slate-600 ${
-            open ? 'rotate-90' : ''
-          }`}
-        />
-      </button>
-      {open && (
-        <div className="mt-0.5 space-y-0.5 border-l border-slate-200/80 ml-3 pl-0.5">
-          {children}
-        </div>
-      )}
-    </div>
   )
 }

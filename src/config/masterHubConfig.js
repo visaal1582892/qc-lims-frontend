@@ -1,49 +1,43 @@
 /**
- * Master hub configuration — data-driven navigation.
+ * Master hub configuration — grouped navigation for QC LIMS master data.
+ *
+ * Matches the marketing-automation MASTER_HUB_SECTIONS pattern.
  */
-export const masterHubConfig = [
+
+export const MASTER_HUB_SECTIONS = [
   {
-    title: 'Metric Units',
-    description: 'Manage measurement units used in test results (mg, %, ppm, count, etc.)',
+    id: 'measurement-masters',
+    title: 'Measurement Masters',
+    description: 'Units of measurement and test parameters used in QC analysis.',
     icon: 'scale',
-    path: '/masters/metric-units',
-    color: 'text-brand-600',
-    bgColor: 'bg-brand-50',
-    borderColor: 'border-brand-200',
-    hoverBorderColor: 'hover:border-brand-400',
-    requiredRight: 'ROLE_METRIC_UNIT_READ',
+    accent: 'brand',
+    items: [
+      { label: 'Metric Units',       to: '/masters/metric-units',              icon: 'scale',         right: 'ROLE_METRIC_UNIT_READ' },
+      { label: 'Test Parameters',    to: '/masters/test-parameters',           icon: 'flaskConical',  right: 'ROLE_TEST_PARAMETER_READ' },
+    ],
   },
   {
-    title: 'Test Parameters',
-    description: 'Manage analytical test parameters, result types, and associated metric units.',
-    icon: 'flaskConical',
-    path: '/masters/test-parameters',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    hoverBorderColor: 'hover:border-blue-400',
-    requiredRight: 'ROLE_TEST_PARAMETER_READ',
-  },
-  {
-    title: 'Analyst Qualifications',
-    description: 'Manage analyst-to-parameter qualifications with qualification dates.',
-    icon: 'graduationCap',
-    path: '/masters/analyst-qualifications',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50',
-    borderColor: 'border-emerald-200',
-    hoverBorderColor: 'hover:border-emerald-400',
-    requiredRight: 'ROLE_QUALIFICATION_READ',
-  },
-  {
-    title: 'QC Inventory Configuration',
-    description: 'Manage product-to-parameter inventory requirements and counts.',
-    icon: 'package2',
-    path: '/masters/inventory-config',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-    hoverBorderColor: 'hover:border-amber-400',
-    requiredRight: 'ROLE_INVENTORY_CONFIG_READ',
+    id: 'organization-masters',
+    title: 'Organization Masters',
+    description: 'Analyst qualifications and inventory configuration for QC testing.',
+    icon: 'building',
+    accent: 'emerald',
+    items: [
+      { label: 'Analyst Qualifications',    to: '/masters/analyst-qualifications', icon: 'graduationCap', right: 'ROLE_QUALIFICATION_READ' },
+      { label: 'QC Inventory Configuration', to: '/masters/inventory-config',      icon: 'package2',      right: 'ROLE_INVENTORY_CONFIG_READ' },
+    ],
   },
 ]
+
+const ACCENT_STYLES = {
+  brand:   { card: 'border-brand-200 bg-gradient-to-br from-brand-50/80 to-white', icon: 'bg-brand-100 text-brand-600', link: 'hover:border-brand-200 hover:bg-brand-50/50' },
+  violet:  { card: 'border-violet-200 bg-gradient-to-br from-violet-50/80 to-white', icon: 'bg-violet-100 text-violet-600', link: 'hover:border-violet-200 hover:bg-violet-50/50' },
+  slate:   { card: 'border-slate-200 bg-gradient-to-br from-slate-50 to-white', icon: 'bg-slate-100 text-slate-600', link: 'hover:border-slate-300 hover:bg-slate-50' },
+  emerald: { card: 'border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-white', icon: 'bg-emerald-100 text-emerald-600', link: 'hover:border-emerald-200 hover:bg-emerald-50/50' },
+  amber:   { card: 'border-amber-200 bg-gradient-to-br from-amber-50/80 to-white', icon: 'bg-amber-100 text-amber-600', link: 'hover:border-amber-200 hover:bg-amber-50/50' },
+  sky:     { card: 'border-sky-200 bg-gradient-to-br from-sky-50/80 to-white', icon: 'bg-sky-100 text-sky-600', link: 'hover:border-sky-200 hover:bg-sky-50/50' },
+}
+
+export function getAccentStyle(accent) {
+  return ACCENT_STYLES[accent] || ACCENT_STYLES.slate
+}

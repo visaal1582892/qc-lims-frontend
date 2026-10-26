@@ -1,87 +1,66 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
-import { masterHubConfig } from '../config/masterHubConfig'
 import Icon from '../components/Icon'
+import { MASTER_HUB_SECTIONS, getAccentStyle } from '../config/masterHubConfig'
 
 export default function MasterHubPage() {
   const { hasRight } = useAuth()
-  const navigate = useNavigate()
 
-  const visibleMasters = masterHubConfig.filter(
-    (m) => !m.requiredRight || hasRight(m.requiredRight)
-  )
+  const sections = MASTER_HUB_SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => {
+      // Accessible if: no right required, OR specific entity right, OR generic master data right
+      if (!item.right) return true
+      return hasRight(item.right) || hasRight('ROLE_MASTER_DATA_READ')
+    }),
+  })).filter((section) => section.items.length > 0)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg
-                           bg-brand-50 text-brand-600 ring-1 ring-brand-100">
-            <Icon name="cog" className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-slate-900">Master Hub</h1>
-            <p className="text-xs text-slate-500">
-              Configure and manage all master data for the QC LIMS system.
-            </p>
-          </div>
-        </div>
-      </header>
+    <div className="h-full flex flex-col gap-4">
+      <div className="shrink-0">
+        <p className="text-sm text-slate-500">
+          Configure master data, mappings, and system settings. Pick a section below.
+        </p>
+      </div>
 
-      {/* Cards Grid */}
-      {visibleMasters.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {visibleMasters.map((master) => (
-            <button
-              key={master.path}
-              onClick={() => navigate(master.path)}
-              className={`
-                group flex flex-col p-5 bg-white rounded-xl border-2 text-left
-                ${master.borderColor} ${master.hoverBorderColor}
-                hover:shadow-md transition-all duration-200
-              `}
-            >
-              {/* Icon */}
-              <div
-                className={`
-                  flex items-center justify-center h-11 w-11 rounded-lg mb-3
-                  ${master.bgColor}
-                `}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+        <div className="grid gap-5 lg:grid-cols-2">
+          {sections.map((section) => {
+            const style = getAccentStyle(section.accent)
+            return (
+              <section
+                key={section.id}
+                className={`rounded-xl border shadow-sm overflow-hidden ${style.card}`}
               >
-                <Icon name={master.icon} className={`h-6 w-6 ${master.color}`} />
-              </div>
+                <div className="flex items-start gap-3 border-b border-slate-100/80 px-4 py-3.5">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${style.icon}`}>
+                    <Icon name={section.icon} className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900">{section.title}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">{section.description}</p>
+                  </div>
+                </div>
 
-              {/* Title */}
-              <h3 className="text-sm font-semibold text-slate-800 group-hover:text-brand-600 transition-colors">
-                {master.title}
-              </h3>
-
-              {/* Description */}
-              <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">
-                {master.description}
-              </p>
-
-              {/* Arrow indicator */}
-              <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                Manage
-                <Icon name="chevronRight" className="h-3.5 w-3.5" />
-              </div>
-            </button>
-          ))}
+                <ul className="grid gap-1.5 p-3 sm:grid-cols-2">
+                  {section.items.map((item) => (
+                    <li key={item.to}>
+                      <Link
+                        to={item.to}
+                        className={`flex items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-xs font-medium text-slate-700 transition ${style.link}`}
+                      >
+                        <Icon name={item.icon} className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                        <span className="truncate">{item.label}</span>
+                        <Icon name="chevronRight" className="ml-auto h-3 w-3 shrink-0 -rotate-90 text-slate-300" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )
+          })}
         </div>
-      )}
-
-      {/* Empty state */}
-      {visibleMasters.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Icon name="lock" className="h-12 w-12 text-slate-300 mb-4" />
-          <h3 className="text-base font-medium text-slate-600">No Access</h3>
-          <p className="text-sm text-slate-400 mt-1">
-            You don't have permission to view any master data.
-          </p>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

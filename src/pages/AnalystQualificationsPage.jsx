@@ -78,7 +78,7 @@ export default function AnalystQualificationsPage() {
     }
   }
 
-  const canUpload = hasRight(Rights.ROLE_QUALIFICATION_UPLOAD)
+  const canUpload = hasRight(Rights.ROLE_QUALIFICATION_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">

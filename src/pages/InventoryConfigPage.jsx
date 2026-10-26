@@ -78,7 +78,7 @@ export default function InventoryConfigPage() {
     }
   }
 
-  const canUpload = hasRight(Rights.ROLE_INVENTORY_CONFIG_UPLOAD)
+  const canUpload = hasRight(Rights.ROLE_INVENTORY_CONFIG_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">

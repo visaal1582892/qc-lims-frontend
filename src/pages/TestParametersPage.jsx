@@ -77,7 +77,7 @@ export default function TestParametersPage() {
     }
   }
 
-  const canUpload = hasRight(Rights.ROLE_TEST_PARAMETER_UPLOAD)
+  const canUpload = hasRight(Rights.ROLE_TEST_PARAMETER_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">

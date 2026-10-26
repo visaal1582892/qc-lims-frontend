@@ -79,7 +79,7 @@ export default function MetricUnitsPage() {
     }
   }
 
-  const canUpload = hasRight(Rights.ROLE_METRIC_UNIT_UPLOAD)
+  const canUpload = hasRight(Rights.ROLE_METRIC_UNIT_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
