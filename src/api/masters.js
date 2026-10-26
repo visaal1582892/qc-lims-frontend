@@ -6,7 +6,7 @@ export const mastersApi = {
     uploadMetricUnits: (file) => {
         const formData = new FormData()
         formData.append('file', file)
-        return api.post('/masters/metric-units', formData, {
+        return api.post('/masters/metric-units/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
     },
@@ -18,7 +18,7 @@ export const mastersApi = {
     uploadTestParameters: (file) => {
         const formData = new FormData()
         formData.append('file', file)
-        return api.post('/masters/test-parameters', formData, {
+        return api.post('/masters/test-parameters/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
     },
@@ -30,7 +30,7 @@ export const mastersApi = {
     uploadAnalystQualifications: (file) => {
         const formData = new FormData()
         formData.append('file', file)
-        return api.post('/masters/analyst-qualifications', formData, {
+        return api.post('/masters/analyst-qualifications/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
     },
@@ -42,7 +42,7 @@ export const mastersApi = {
     uploadInventoryConfig: (file) => {
         const formData = new FormData()
         formData.append('file', file)
-        return api.post('/masters/inventory-config', formData, {
+        return api.post('/masters/inventory-config/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         })
     },
