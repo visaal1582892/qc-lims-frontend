@@ -93,17 +93,30 @@ export default function TestParametersPage() {
             <p className="text-xs text-slate-500">{total} record{total === 1 ? '' : 's'} total</p>
           </div>
         </div>
-        {canUpload && (
-          <button
-            onClick={() => setShowUpload(true)}
-            className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3.5 py-2
-                       text-sm font-semibold text-white shadow-sm transition
-                       hover:bg-brand-700 active:scale-[0.98]"
-          >
-            <Icon name="upload" className="h-4 w-4" />
-            Upload Excel
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {canUpload && (
+            <>
+              <button
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3.5 py-2
+                           text-sm font-semibold text-slate-700 shadow-sm transition
+                           hover:bg-slate-50 active:scale-[0.98]"
+              >
+                <Icon name="download" className="h-4 w-4" />
+                Download Template
+              </button>
+              <button
+                onClick={() => setShowUpload(true)}
+                className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3.5 py-2
+                           text-sm font-semibold text-white shadow-sm transition
+                           hover:bg-brand-700 active:scale-[0.98]"
+              >
+                <Icon name="upload" className="h-4 w-4" />
+                Upload Excel
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
       <section className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200/70">
@@ -194,7 +207,6 @@ export default function TestParametersPage() {
       <BulkUploadModal
         open={showUpload}
         onClose={() => setShowUpload(false)}
-        onDownloadTemplate={handleDownloadTemplate}
         onUpload={handleUpload}
         title="Upload Test Parameters"
         description="Download the template, fill in test parameters, and upload."

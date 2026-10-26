@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Upload, Download, AlertCircle, CheckCircle2, FileSpreadsheet, Info } from 'lucide-react'
+import { X, Upload, AlertCircle, CheckCircle2, FileSpreadsheet, Info } from 'lucide-react'
 
 /**
  * Generic Excel bulk upload modal — download template, drag & drop, process, errors.
@@ -8,7 +8,6 @@ import { X, Upload, Download, AlertCircle, CheckCircle2, FileSpreadsheet, Info }
 export default function BulkUploadModal({
   open,
   onClose,
-  onDownloadTemplate,
   onUpload,
   title = 'Upload Excel',
   description = 'Download the template, fill in your data, and upload it.',
@@ -199,13 +198,6 @@ export default function BulkUploadModal({
                   Upload
                 </>
               )}
-            </button>
-            <button
-              onClick={() => onDownloadTemplate()}
-              className="flex items-center gap-2 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              Download Template
             </button>
           </div>
         </div>
