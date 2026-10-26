@@ -12,6 +12,7 @@ export default function BulkUploadModal({
   title = 'Upload Excel',
   description = 'Download the template, fill in your data, and upload it.',
   fileName = 'errors.xlsx',
+  onSuccess,
 }) {
   const fileInputRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -54,76 +55,34 @@ export default function BulkUploadModal({
     if (file) validateAndSetFile(file)
   }
 
-  /**
-   * Try to parse a Blob as JSON. If it looks like JSON text, return the
-   * parsed object. Otherwise return the raw blob (it's a binary file like
-   * an Excel error report).
-   */
-  async function parseBlobResponse(blob) {
-    try {
-      const text = await blob.text()
-      const obj = JSON.parse(text)
-      return obj
-    } catch {
-      // Not JSON — treat as a binary file (Excel error report)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url; a.download = fileName
-      document.body.appendChild(a); a.click(); document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-      return { __downloaded: true }
-    }
-  }
-
   const handleUpload = async () => {
     if (!selectedFile || uploading) return
     setUploading(true)
     setResult(null)
     try {
       const res = await onUpload(selectedFile)
-      // Axios with responseType: 'blob' always returns response.data as a Blob
-      const blob = res.data
-      const parsed = await parseBlobResponse(blob)
+      const data = res.data
 
-      if (parsed?.__downloaded) {
-        setResult({ success: false, message: 'Unexpected file response from server.', errorCount: 0 })
-        return
-      }
-
-      if (parsed && typeof parsed === 'object' && 'success' in parsed) {
-        if (parsed.success) {
-          setResult({ success: true, message: parsed.message })
-        } else {
-          setResult({
-            success: false,
-            message: parsed.message,
-            errorCount: Object.keys(parsed.errors || {}).length,
-          })
-          if (parsed.errorFileBase64) {
-            downloadBase64(parsed.errorFileBase64, fileName)
-          }
-        }
+      if (data.success) {
+        setResult({ success: true, message: data.message })
+        onSuccess?.()
+        // Auto-close after 1.5s on success
+        setTimeout(() => onClose(), 1500)
       } else {
-        setResult({ error: 'Unexpected server response' })
+        setResult({
+          success: false,
+          message: data.message,
+          errorCount: Object.keys(data.errorRows || {}).length,
+        })
+        // Download error file if included as base64
+        if (data.errorFileBase64) {
+          downloadBase64(data.errorFileBase64, fileName)
+        }
       }
     } catch (err) {
-      // 4xx/5xx — the blob is the error Excel file
-      const blob = err.response?.data
-      if (blob instanceof Blob) {
-        const parsed = await parseBlobResponse(blob)
-        if (parsed?.__downloaded) {
-          setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
-        } else if (parsed && typeof parsed === 'object' && 'success' in parsed) {
-          setResult({
-            success: false,
-            message: parsed.message || 'Validation failed',
-            errorCount: Object.keys(parsed.errors || {}).length,
-          })
-        }
-      } else {
-        const msg = err.response?.data?.message || err.response?.data?.errorMessage || 'Upload failed'
-        setResult({ error: msg })
-      }
+      const serverData = err.response?.data
+      const msg = serverData?.message || serverData?.errorMessage || 'Upload failed'
+      setResult({ error: msg })
     } finally {
       setUploading(false)
     }
@@ -214,7 +173,7 @@ export default function BulkUploadModal({
               <div>
                 <p className="text-sm font-medium text-amber-800">Validation Errors</p>
                 <p className="text-xs text-amber-600">{result.message}</p>
-                {result.errorCount && <p className="text-xs text-amber-500">{result.errorCount} row(s) with errors</p>}
+                {result.errorCount && <p className="text-xs text-amber-500">{result.errorCount} row(s) with errors — error file downloaded</p>}
               </div>
             </div>
           )}
