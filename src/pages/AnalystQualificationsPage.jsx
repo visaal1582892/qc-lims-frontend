@@ -123,7 +123,7 @@ export default function AnalystQualificationsPage() {
       <section className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200/70">
         <div className="hidden w-full overflow-x-auto sm:block">
           <table className="w-full min-w-full text-sm">
-            <thead className="bg-slate-50">
+            <thead className="sticky top-0 z-10 bg-slate-50">
               <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
                               tracking-wider text-slate-500">
                 <th className="w-24 px-4 py-2.5">ID</th>
@@ -149,7 +149,7 @@ export default function AnalystQualificationsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto bg-white">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
                 <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
               ) : items.length === 0 ? (
@@ -177,27 +177,25 @@ export default function AnalystQualificationsPage() {
                 options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
             </div>
           </div>
-          <div className="max-h-[420px] overflow-y-auto">
-            {loading ? (
-              <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
-            ) : items.length === 0 ? (
-              <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
-            ) : (
-              items.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-slate-500">{item.employeeId}</span>
-                      <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
-                    </div>
-                    <div className="mt-1.5">
-                      <StatusPill active={isItemActive(item)} />
-                    </div>
+          {loading ? (
+            <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
+          ) : items.length === 0 ? (
+            <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
+          ) : (
+            items.map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs text-slate-500">{item.employeeId}</span>
+                    <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
+                  </div>
+                  <div className="mt-1.5">
+                    <StatusPill active={isItemActive(item)} />
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            ))
+          )}
           <div className="px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
               pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
