@@ -9,6 +9,7 @@ import Icon from './Icon'
  *   totalElements number   – total record count (for display)
  *   pageSize      number   – rows per page
  *   onPageChange  fn(page) – called with new 0-based page when user navigates
+ *   onPageSizeChange  fn(size) – called when user picks a new page size
  *   loading       bool     – when true, nav buttons are disabled
  */
 export default function Pagination({
@@ -17,6 +18,7 @@ export default function Pagination({
   totalElements,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   loading = false,
 }) {
   if (totalElements === 0) return null
@@ -33,44 +35,80 @@ export default function Pagination({
         {from}–{to} of {totalElements} record{totalElements !== 1 ? 's' : ''}
       </span>
 
-      {/* Navigation — only when there are multiple pages */}
-      {multiPage && (
-        <div className="flex items-center gap-1">
-          <NavBtn
-            disabled={page === 0 || loading}
-            onClick={() => onPageChange(page - 1)}
-            title="Previous page"
+      <div className="flex items-center gap-3">
+        {/* Rows per page selector */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-slate-500">Rows per page:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+            disabled={loading}
+            className="rounded-md border border-slate-200 bg-white py-0.5 pr-6
+                       text-xs font-medium text-slate-700 shadow-sm appearance-none cursor-pointer
+                       focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-100
+                       bg-[url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2210%22 height=%2210%22 viewBox=%220 0 10 10%22><path fill=%22%2394a3b8%22 d=%22M5 7L1 3h8z%22/></svg>')] bg-[right_0.35rem_center] bg-no-repeat"
           >
-            <Icon name="chevronLeft" className="h-3.5 w-3.5" />
-          </NavBtn>
-
-          {pages.map((p, i) =>
-            p === '…' ? (
-              <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-slate-400 select-none">…</span>
-            ) : (
-              <button
-                key={p}
-                disabled={loading}
-                onClick={() => onPageChange(p)}
-                className={`min-w-[28px] rounded-md px-1.5 py-1 text-xs font-medium transition
-                  ${p === page
-                    ? 'bg-brand-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100 disabled:opacity-50'}`}
-              >
-                {p + 1}
-              </button>
-            )
-          )}
-
-          <NavBtn
-            disabled={page >= totalPages - 1 || loading}
-            onClick={() => onPageChange(page + 1)}
-            title="Next page"
-          >
-            <Icon name="chevronRight" className="h-3.5 w-3.5" />
-          </NavBtn>
+            {[10, 20, 50, 100].map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
-      )}
+
+        {/* Navigation — only when there are multiple pages */}
+        {multiPage && (
+          <div className="flex items-center gap-1">
+            <NavBtn
+              disabled={page === 0 || loading}
+              onClick={() => onPageChange(0)}
+              title="First page"
+            >
+              <Icon name="chevronsUpDown" className="h-3.5 w-3.5 rotate-90" />
+            </NavBtn>
+
+            <NavBtn
+              disabled={page === 0 || loading}
+              onClick={() => onPageChange(page - 1)}
+              title="Previous page"
+            >
+              <Icon name="chevronLeft" className="h-3.5 w-3.5" />
+            </NavBtn>
+
+            {pages.map((p, i) =>
+              p === '…' ? (
+                <span key={`ellipsis-${i}`} className="px-1.5 text-xs text-slate-400 select-none">…</span>
+              ) : (
+                <button
+                  key={p}
+                  disabled={loading}
+                  onClick={() => onPageChange(p)}
+                  className={`min-w-[28px] rounded-md px-1.5 py-1 text-xs font-medium transition
+                    ${p === page
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-100 disabled:opacity-50'}`}
+                >
+                  {p + 1}
+                </button>
+              )
+            )}
+
+            <NavBtn
+              disabled={page >= totalPages - 1 || loading}
+              onClick={() => onPageChange(page + 1)}
+              title="Next page"
+            >
+              <Icon name="chevronRight" className="h-3.5 w-3.5" />
+            </NavBtn>
+
+            <NavBtn
+              disabled={page >= totalPages - 1 || loading}
+              onClick={() => onPageChange(totalPages - 1)}
+              title="Last page"
+            >
+              <Icon name="chevronsUpDown" className="h-3.5 w-3.5 -rotate-90" />
+            </NavBtn>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

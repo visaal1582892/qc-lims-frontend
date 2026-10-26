@@ -18,6 +18,7 @@ export default function AnalystQualificationsPage() {
   const [totalPages, setTotalPages]      = useState(0)
   const [loading, setLoading]            = useState(true)
   const [page, setPage]                  = useState(0)
+  const [pageSize, setPageSize]          = useState(PAGE_SIZE)
   const [refreshSeed, setRefreshSeed]    = useState(0)
   const [showUpload, setShowUpload]      = useState(false)
 
@@ -31,14 +32,14 @@ export default function AnalystQualificationsPage() {
   const dEmployeeId = useDebounce(fEmployeeId, 400)
   const dParameter  = useDebounce(fParameter,  400)
 
-  useEffect(() => { setPage(0) }, [dId, dEmployeeId, dParameter, fStatus]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0) }, [dId, dEmployeeId, dParameter, fStatus, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await mastersApi.getAnalystQualifications({
         page,
-        size: PAGE_SIZE,
+        size: pageSize,
         sort: 'employeeId,asc',
         id: dId || undefined,
         employeeId: dEmployeeId || undefined,
@@ -125,11 +126,11 @@ export default function AnalystQualificationsPage() {
             <thead className="bg-slate-50">
               <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
                               tracking-wider text-slate-500">
-                <th className="w-36 px-4 py-2.5">ID</th>
+                <th className="w-24 px-4 py-2.5">ID</th>
                 <th className="px-4 py-2.5">Employee ID</th>
                 <th className="px-4 py-2.5">Test Parameter</th>
-                <th className="w-40 px-4 py-2.5">Qualified On</th>
-                <th className="w-36 px-4 py-2.5">Status</th>
+                <th className="w-36 px-4 py-2.5">Qualified On</th>
+                <th className="w-28 px-4 py-2.5">Status</th>
               </tr>
               <tr className="border-y border-slate-100 bg-slate-50/40">
                 <th className="px-4 py-2">
@@ -148,21 +149,23 @@ export default function AnalystQualificationsPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {loading ? (
-                <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
-              ) : items.length === 0 ? (
-                <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
-              ) : (
-                items.map((item) => (
-                  <QualificationRow key={item.id} item={item} />
-                ))
-              )}
-            </tbody>
+            <div className="max-h-[420px] overflow-y-auto">
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {loading ? (
+                  <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
+                ) : items.length === 0 ? (
+                  <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
+                ) : (
+                  items.map((item) => (
+                    <QualificationRow key={item.id} item={item} />
+                  ))
+                )}
+              </tbody>
+            </div>
           </table>
           <div className="border-t border-slate-100 px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={PAGE_SIZE} onPageChange={setPage} />
+              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
           </div>
         </div>
 
@@ -176,28 +179,30 @@ export default function AnalystQualificationsPage() {
                 options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
             </div>
           </div>
-          {loading ? (
-            <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
-          ) : items.length === 0 ? (
-            <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
-          ) : (
-            items.map((item) => (
-              <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-slate-500">{item.employeeId}</span>
-                    <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
-                  </div>
-                  <div className="mt-1.5">
-                    <StatusPill active={isItemActive(item)} />
+          <div className="max-h-[420px] overflow-y-auto">
+            {loading ? (
+              <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
+            ) : items.length === 0 ? (
+              <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
+            ) : (
+              items.map((item) => (
+                <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs text-slate-500">{item.employeeId}</span>
+                      <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
+                    </div>
+                    <div className="mt-1.5">
+                      <StatusPill active={isItemActive(item)} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
           <div className="px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={PAGE_SIZE} onPageChange={setPage} />
+              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
           </div>
         </div>
       </section>

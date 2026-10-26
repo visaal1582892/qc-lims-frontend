@@ -18,6 +18,7 @@ export default function InventoryConfigPage() {
   const [totalPages, setTotalPages]      = useState(0)
   const [loading, setLoading]            = useState(true)
   const [page, setPage]                  = useState(0)
+  const [pageSize, setPageSize]          = useState(PAGE_SIZE)
   const [refreshSeed, setRefreshSeed]    = useState(0)
   const [showUpload, setShowUpload]      = useState(false)
 
@@ -31,14 +32,14 @@ export default function InventoryConfigPage() {
   const dProductId  = useDebounce(fProductId,  400)
   const dParameter  = useDebounce(fParameter,  400)
 
-  useEffect(() => { setPage(0) }, [dId, dProductId, dParameter, fStatus]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0) }, [dId, dProductId, dParameter, fStatus, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await mastersApi.getInventoryConfig({
         page,
-        size: PAGE_SIZE,
+        size: pageSize,
         sort: 'productId,asc',
         id: dId || undefined,
         productId: dProductId || undefined,
@@ -125,11 +126,11 @@ export default function InventoryConfigPage() {
             <thead className="bg-slate-50">
               <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
                               tracking-wider text-slate-500">
-                <th className="w-36 px-4 py-2.5">ID</th>
+                <th className="w-24 px-4 py-2.5">ID</th>
                 <th className="px-4 py-2.5">Product ID</th>
                 <th className="px-4 py-2.5">Test Parameter</th>
-                <th className="w-36 px-4 py-2.5">Count Needed</th>
-                <th className="w-36 px-4 py-2.5">Status</th>
+                <th className="w-32 px-4 py-2.5">Count Needed</th>
+                <th className="w-28 px-4 py-2.5">Status</th>
               </tr>
               <tr className="border-y border-slate-100 bg-slate-50/40">
                 <th className="px-4 py-2">
@@ -148,21 +149,23 @@ export default function InventoryConfigPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {loading ? (
-                <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
-              ) : items.length === 0 ? (
-                <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
-              ) : (
-                items.map((item) => (
-                  <InventoryRow key={item.id} item={item} />
-                ))
-              )}
-            </tbody>
+            <div className="max-h-[420px] overflow-y-auto">
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {loading ? (
+                  <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
+                ) : items.length === 0 ? (
+                  <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
+                ) : (
+                  items.map((item) => (
+                    <InventoryRow key={item.id} item={item} />
+                  ))
+                )}
+              </tbody>
+            </div>
           </table>
           <div className="border-t border-slate-100 px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={PAGE_SIZE} onPageChange={setPage} />
+              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
           </div>
         </div>
 
@@ -176,29 +179,31 @@ export default function InventoryConfigPage() {
                 options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
             </div>
           </div>
-          {loading ? (
-            <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
-          ) : items.length === 0 ? (
-            <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
-          ) : (
-            items.map((item) => (
-              <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-slate-500">{item.productId}</span>
-                    <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <StatusPill active={isItemActive(item)} />
-                    <span className="text-xs text-slate-500">Count: {item.countNeeded}</span>
+          <div className="max-h-[420px] overflow-y-auto">
+            {loading ? (
+              <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
+            ) : items.length === 0 ? (
+              <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
+            ) : (
+              items.map((item) => (
+                <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs text-slate-500">{item.productId}</span>
+                      <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <StatusPill active={isItemActive(item)} />
+                      <span className="text-xs text-slate-500">Count: {item.countNeeded}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
           <div className="px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={PAGE_SIZE} onPageChange={setPage} />
+              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
           </div>
         </div>
       </section>
