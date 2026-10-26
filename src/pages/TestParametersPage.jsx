@@ -55,7 +55,7 @@ export default function TestParametersPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, dId, dName, fResultType, fStatus, refreshSeed])
+  }, [page, dId, dName, fResultType, fStatus, refreshSeed, pageSize])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -149,19 +149,17 @@ export default function TestParametersPage() {
                 </th>
               </tr>
             </thead>
-            <div className="max-h-[420px] overflow-y-auto">
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {loading ? (
-                  <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
-                ) : items.length === 0 ? (
-                  <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
-                ) : (
-                  items.map((item) => (
-                    <TestParameterRow key={item.id} item={item} />
-                  ))
-                )}
-              </tbody>
-            </div>
+            <tbody className="max-h-[420px] divide-y divide-slate-100 overflow-y-auto bg-white">
+              {loading ? (
+                <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
+              ) : items.length === 0 ? (
+                <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
+              ) : (
+                items.map((item) => (
+                  <TestParameterRow key={item.id} item={item} />
+                ))
+              )}
+            </tbody>
           </table>
           <div className="border-t border-slate-100 px-4 py-1">
             <Pagination page={page} totalPages={totalPages} totalElements={total}
