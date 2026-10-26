@@ -12,55 +12,65 @@ export default function MasterHubPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Master Hub</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Configure and manage all master data for the QC LIMS system.
-        </p>
-      </div>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg
+                           bg-brand-50 text-brand-600 ring-1 ring-brand-100">
+            <Icon name="cog" className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-slate-900">Master Hub</h1>
+            <p className="text-xs text-slate-500">
+              Configure and manage all master data for the QC LIMS system.
+            </p>
+          </div>
+        </div>
+      </header>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {visibleMasters.map((master) => (
-          <button
-            key={master.path}
-            onClick={() => navigate(master.path)}
-            className={`
-              group flex flex-col p-5 bg-white rounded-xl border-2 text-left
-              ${master.borderColor} ${master.hoverBorderColor}
-              hover:shadow-md transition-all duration-200
-            `}
-          >
-            {/* Icon */}
-            <div
+      {visibleMasters.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {visibleMasters.map((master) => (
+            <button
+              key={master.path}
+              onClick={() => navigate(master.path)}
               className={`
-                flex items-center justify-center h-11 w-11 rounded-lg mb-3
-                ${master.bgColor}
+                group flex flex-col p-5 bg-white rounded-xl border-2 text-left
+                ${master.borderColor} ${master.hoverBorderColor}
+                hover:shadow-md transition-all duration-200
               `}
             >
-              <Icon name={master.icon} className={`h-6 w-6 ${master.color}`} />
-            </div>
+              {/* Icon */}
+              <div
+                className={`
+                  flex items-center justify-center h-11 w-11 rounded-lg mb-3
+                  ${master.bgColor}
+                `}
+              >
+                <Icon name={master.icon} className={`h-6 w-6 ${master.color}`} />
+              </div>
 
-            {/* Title */}
-            <h3 className="text-sm font-semibold text-slate-800 group-hover:text-brand-600 transition-colors">
-              {master.title}
-            </h3>
+              {/* Title */}
+              <h3 className="text-sm font-semibold text-slate-800 group-hover:text-brand-600 transition-colors">
+                {master.title}
+              </h3>
 
-            {/* Description */}
-            <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">
-              {master.description}
-            </p>
+              {/* Description */}
+              <p className="text-xs text-slate-400 mt-1.5 line-clamp-2">
+                {master.description}
+              </p>
 
-            {/* Arrow indicator */}
-            <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
-              Manage
-              <Icon name="chevronRight" className="h-3.5 w-3.5" />
-            </div>
-          </button>
-        ))}
-      </div>
+              {/* Arrow indicator */}
+              <div className="mt-4 flex items-center gap-1 text-xs font-medium text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                Manage
+                <Icon name="chevronRight" className="h-3.5 w-3.5" />
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Empty state */}
       {visibleMasters.length === 0 && (

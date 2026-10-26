@@ -1,58 +1,67 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { mastersApi } from '../api/masters'
 import { Rights } from '../constants/rights'
 import BulkUploadModal from '../components/masters/BulkUploadModal'
-import {
-  Upload,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
+import Icon from '../components/Icon'
+import Pagination from '../components/Pagination'
+import BackToMaster from '../components/admin/BackToMaster'
+import { TableStatusRow } from '../components/dataTable'
+import useDebounce from '../hooks/useDebounce'
+
+const PAGE_SIZE = 20
 
 export default function AnalystQualificationsPage() {
   const { hasRight } = useAuth()
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [includeInactive, setIncludeInactive] = useState(false)
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-  const [totalElements, setTotalElements] = useState(0)
-  const [showUpload, setShowUpload] = useState(false)
-  const [error, setError] = useState(null)
+  const [items, setItems]                = useState([])
+  const [total, setTotal]                = useState(0)
+  const [totalPages, setTotalPages]      = useState(0)
+  const [loading, setLoading]            = useState(true)
+  const [page, setPage]                  = useState(0)
+  const [refreshSeed, setRefreshSeed]    = useState(0)
+  const [showUpload, setShowUpload]      = useState(false)
+
+  // Column filters
+  const [fId, setFId]         = useState('')
+  const [fEmployeeId, setEmployeeId] = useState('')
+  const [fParameter, setParameter]    = useState('')
+  const [fStatus, setFStatus] = useState('all')
+
+  const dId         = useDebounce(fId,         400)
+  const dEmployeeId = useDebounce(fEmployeeId, 400)
+  const dParameter  = useDebounce(fParameter,  400)
+
+  useEffect(() => { setPage(0) }, [dId, dEmployeeId, dParameter, fStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await mastersApi.getAnalystQualifications({
         page,
-        size: 15,
+        size: PAGE_SIZE,
         sort: 'employeeId,asc',
-        includeInactive,
-        search: search || undefined,
+        id: dId || undefined,
+        employeeId: dEmployeeId || undefined,
+        parameterName: dParameter || undefined,
+        includeInactive: fStatus === 'all' ? undefined : fStatus === 'inactive',
       })
       if (res.data?.content) {
         setItems(res.data.content)
         setTotalPages(res.data.totalPages || 0)
-        setTotalElements(res.data.totalElements || 0)
+        setTotal(res.data.totalElements || 0)
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to load analyst qualifications')
       console.error('Failed to load analyst qualifications:', err)
     } finally {
       setLoading(false)
     }
-  }, [page, includeInactive, search])
+  }, [page, dId, dEmployeeId, dParameter, fStatus, refreshSeed])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
   const handleUpload = async (file) => {
     const res = await mastersApi.uploadAnalystQualifications(file)
-    await fetchItems()
+    setRefreshSeed((s) => s + 1)
     return res.data
   }
 
@@ -61,11 +70,8 @@ export default function AnalystQualificationsPage() {
       const res = await mastersApi.downloadAnalystQualificationTemplate()
       const url = window.URL.createObjectURL(res.data)
       const a = document.createElement('a')
-      a.href = url
-      a.download = 'analyst_qualification_template.xlsx'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+      a.href = url; a.download = 'analyst_qualification_template.xlsx'
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Template download failed:', err)
@@ -75,114 +81,114 @@ export default function AnalystQualificationsPage() {
   const canUpload = hasRight(Rights.ROLE_QUALIFICATION_UPLOAD)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Analyst Qualifications</h2>
-          <p className="text-sm text-slate-500 mt-1">
-            Manage analyst-to-parameter qualifications with qualification dates.
-          </p>
+    <div className="mx-auto max-w-7xl space-y-5">
+      <BackToMaster />
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg
+                           bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
+            <Icon name="graduationCap" className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-slate-900">Analyst Qualifications</h1>
+            <p className="text-xs text-slate-500">{total} record{total === 1 ? '' : 's'} total</p>
+          </div>
         </div>
         {canUpload && (
           <button
             onClick={() => setShowUpload(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3.5 py-2
+                       text-sm font-semibold text-white shadow-sm transition
+                       hover:bg-brand-700 active:scale-[0.98]"
           >
-            <Upload className="h-4 w-4" />
+            <Icon name="upload" className="h-4 w-4" />
             Upload Excel
           </button>
         )}
-      </div>
+      </header>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by employee ID..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0) }}
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400"
-          />
-        </div>
-        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={includeInactive}
-            onChange={(e) => { setIncludeInactive(e.target.checked); setPage(0) }}
-            className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-          />
-          {includeInactive ? (
-            <><Eye className="h-4 w-4" /> Showing all</>
-          ) : (
-            <><EyeOff className="h-4 w-4" /> Active only</>
-          )}
-        </label>
-        <button onClick={fetchItems} disabled={loading} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 transition-colors">
-          <RefreshCw className={`h-4 w-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">#</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Employee ID</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Test Parameter</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Qualified On</th>
-                <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">Status</th>
+      <section className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200/70">
+        <div className="hidden w-full overflow-x-auto sm:block">
+          <table className="w-full min-w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
+                              tracking-wider text-slate-500">
+                <th className="w-36 px-4 py-2.5">ID</th>
+                <th className="px-4 py-2.5">Employee ID</th>
+                <th className="px-4 py-2.5">Test Parameter</th>
+                <th className="w-40 px-4 py-2.5">Qualified On</th>
+                <th className="w-36 px-4 py-2.5">Status</th>
+              </tr>
+              <tr className="border-y border-slate-100 bg-slate-50/40">
+                <th className="px-4 py-2">
+                  <FilterInput value={fId} onChange={setFId} placeholder="Filter ID…" />
+                </th>
+                <th className="px-4 py-2">
+                  <FilterInput value={fEmployeeId} onChange={setEmployeeId} placeholder="Filter Employee ID…" icon="search" />
+                </th>
+                <th className="px-4 py-2">
+                  <FilterInput value={fParameter} onChange={setParameter} placeholder="Search parameter…" icon="search" />
+                </th>
+                <th />
+                <th className="px-4 py-2">
+                  <FilterSelect value={fStatus} onChange={setFStatus}
+                    options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
-              ) : error ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-red-600">{error}</td></tr>
+                <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
               ) : items.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">No analyst qualifications found.</td></tr>
+                <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
               ) : (
-                items.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-3 text-slate-400">{page * 15 + idx + 1}</td>
-                    <td className="px-4 py-3 font-medium text-slate-800">{item.employeeId}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.testParameter?.name || '-'}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.qualifiedOn}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium
-                        ${item.status === 'ACTIVE' || item.status === 'A'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'}`}>
-                        {item.status === 'ACTIVE' || item.status === 'A' ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                  </tr>
+                items.map((item) => (
+                  <QualificationRow key={item.id} item={item} />
                 ))
               )}
             </tbody>
           </table>
+          <div className="border-t border-slate-100 px-4 py-1">
+            <Pagination page={page} totalPages={totalPages} totalElements={total}
+              pageSize={PAGE_SIZE} onPageChange={setPage} />
+          </div>
         </div>
 
-        {totalPages > 0 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
-            <p className="text-xs text-slate-500">
-              Showing {page * 15 + 1}–{Math.min((page + 1) * 15, totalElements)} of {totalElements}
-            </p>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                <ChevronLeft className="h-4 w-4 text-slate-500" />
-              </button>
-              <span className="text-sm text-slate-600">{page + 1} / {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1} className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                <ChevronRight className="h-4 w-4 text-slate-500" />
-              </button>
+        {/* Mobile */}
+        <div className="block divide-y divide-slate-100 sm:hidden">
+          <div className="space-y-2 p-3">
+            <FilterInput value={fEmployeeId} onChange={setEmployeeId} placeholder="Search employee ID…" icon="search" />
+            <div className="grid grid-cols-2 gap-2">
+              <FilterInput value={fId} onChange={setFId} placeholder="Filter ID…" />
+              <FilterSelect value={fStatus} onChange={setFStatus}
+                options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
             </div>
           </div>
-        )}
-      </div>
+          {loading ? (
+            <div className="px-4 py-12 text-center text-sm text-slate-500">Loading…</div>
+          ) : items.length === 0 ? (
+            <div className="px-4 py-12 text-center text-sm text-slate-500">No matching records.</div>
+          ) : (
+            items.map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs text-slate-500">{item.employeeId}</span>
+                    <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
+                  </div>
+                  <div className="mt-1.5">
+                    <StatusPill active={isItemActive(item)} />
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          <div className="px-4 py-1">
+            <Pagination page={page} totalPages={totalPages} totalElements={total}
+              pageSize={PAGE_SIZE} onPageChange={setPage} />
+          </div>
+        </div>
+      </section>
 
       <BulkUploadModal
         open={showUpload}
@@ -194,5 +200,75 @@ export default function AnalystQualificationsPage() {
         fileName="analyst_qualification_errors.xlsx"
       />
     </div>
+  )
+}
+
+/* ---------------- helpers ---------------- */
+
+function isItemActive(item) {
+  return item.status === 'ACTIVE' || item.status === 'A'
+}
+
+function QualificationRow({ item }) {
+  const active = isItemActive(item)
+  return (
+    <tr className={`transition hover:bg-slate-50/60 ${!active ? 'bg-slate-50/50 opacity-75' : ''}`}>
+      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.id}</td>
+      <td className={`px-4 py-2.5 font-medium text-slate-800 ${!active ? 'line-through text-slate-400' : ''}`}>{item.employeeId}</td>
+      <td className={`px-4 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</td>
+      <td className={`px-4 py-2.5 text-xs text-slate-500 ${!active ? 'line-through text-slate-400' : ''}`}>{item.qualifiedOn || '-'}</td>
+      <td className="px-4 py-2.5"><StatusPill active={active} /></td>
+    </tr>
+  )
+}
+
+function FilterInput({ value, onChange, placeholder, icon }) {
+  return (
+    <div className="relative">
+      {icon && (
+        <Icon name={icon}
+              className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      )}
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={`w-full rounded-md border border-slate-200 bg-white py-1.5
+                    text-xs text-slate-700 shadow-sm placeholder:text-slate-400
+                    focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100
+                    ${icon ? 'pl-8 pr-2.5' : 'px-2.5'}`}
+      />
+    </div>
+  )
+}
+
+function FilterSelect({ value, onChange, options }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-2.5 pr-7
+                 text-xs text-slate-700 shadow-sm appearance-none cursor-pointer
+                 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100
+                 bg-[url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%2394a3b8%22 d=%22M6 8L1 3h10z%22/></svg>')] bg-[right_0.5rem_center] bg-no-repeat"
+    >
+      {options.map(([val, label]) => (
+        <option key={val} value={val}>{label}</option>
+      ))}
+    </select>
+  )
+}
+
+function StatusPill({ active }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium
+                  ${active
+                    ? 'bg-accent-50 text-accent-700 ring-1 ring-accent-200'
+                    : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent-500' : 'bg-slate-400'}`} />
+      {active ? 'Active' : 'Inactive'}
+    </span>
   )
 }
