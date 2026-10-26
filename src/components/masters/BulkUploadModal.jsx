@@ -1,30 +1,33 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Upload, AlertCircle, CheckCircle2, FileSpreadsheet, Info } from 'lucide-react'
+import { X, Upload, FileSpreadsheet } from 'lucide-react'
+import { useToast } from '../Toast'
 
 /**
- * Generic Excel bulk upload modal — download template, drag & drop, process, errors.
- * Mirrors marketing-automation frontend UserExcelUploadModal.
+ * Generic Excel bulk upload modal — download template, drag & drop, process.
+ * On success: toast success message, auto-close modal, refresh data.
+ * On validation errors: toast warning, auto-download error file, auto-close modal.
+ * No inline messages in the modal — all feedback via toast alerts.
+ * Matches marketing-automation UserExcelUploadModal UX pattern.
  */
 export default function BulkUploadModal({
   open,
   onClose,
   onUpload,
   title = 'Upload Excel',
-  description = 'Download the template, fill in your data, and upload it.',
+  description = 'Download the template, fill in your data, and upload.',
   fileName = 'errors.xlsx',
   onSuccess,
 }) {
+  const toast = useToast()
   const fileInputRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [result, setResult] = useState(null)
 
   useEffect(() => {
     if (!open) {
       setSelectedFile(null)
       setUploading(false)
-      setResult(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }, [open])
@@ -34,11 +37,10 @@ export default function BulkUploadModal({
   const validateAndSetFile = (file) => {
     const name = file.name.toLowerCase()
     if (!name.endsWith('.xlsx') && !name.endsWith('.xls')) {
-      setResult({ error: 'Invalid file type. Please select an Excel workbook (.xlsx or .xls).' })
+      toast.error('Invalid file type. Please select an Excel workbook (.xlsx or .xls).')
       return
     }
     setSelectedFile(file)
-    setResult(null)
   }
 
   const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true) }
@@ -55,43 +57,42 @@ export default function BulkUploadModal({
     if (file) validateAndSetFile(file)
   }
 
-  const handleUpload = async () => {
-    if (!selectedFile || uploading) return
-    setUploading(true)
-    setResult(null)
-    try {
-      // onUpload already returns the parsed JSON body (res.data from the parent page)
-      const data = await onUpload(selectedFile)
-
-      if (data && data.success) {
-        setResult({ success: true, message: data.message })
-        onSuccess?.()
-        setTimeout(() => onClose(), 1500)
-      } else if (data && !data.success) {
-        setResult({
-          success: false,
-          message: data.message,
-          errorCount: Object.keys(data.errorRows || {}).length,
-        })
-        if (data.errorFileBase64) {
-          downloadBase64(data.errorFileBase64, fileName)
-        }
-      } else {
-        setResult({ error: 'Unexpected server response' })
-      }
-    } catch (err) {
-      // The parent page catches API errors, but handle case where data comes as error
-      const serverData = err.response?.data || err.data || err
-      const msg = serverData?.message || serverData?.errorMessage || 'Upload failed'
-      setResult({ error: msg })
-    } finally {
-      setUploading(false)
-    }
-  }
-
   const handleClose = () => {
     if (uploading) return
     onClose()
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile || uploading) return
+    setUploading(true)
+    try {
+      const data = await onUpload(selectedFile)
+
+      if (data?.success) {
+        toast.success(data.message)
+        onSuccess?.()
+        onClose()
+      } else {
+        const errorCount = data?.errorRows ? Object.keys(data.errorRows).length : 0
+        toast.warning(
+          `${errorCount} row(s) failed validation — error file downloaded.`,
+          5000
+        )
+        if (data?.errorFileBase64) {
+          downloadBase64(data.errorFileBase64, fileName)
+        }
+        onSuccess?.()
+        onClose()
+      }
+    } catch (err) {
+      const serverData = err.response?.data || err.data || err
+      const msg = serverData?.message || serverData?.errorMessage || 'Upload failed'
+      toast.error(msg)
+      onSuccess?.()
+      onClose()
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -150,37 +151,8 @@ export default function BulkUploadModal({
             )}
           </div>
 
-          {/* Result messages */}
-          {result?.success && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-emerald-800">Upload Successful</p>
-                <p className="text-xs text-emerald-600">{result.message}</p>
-              </div>
-            </div>
-          )}
-
-          {result?.error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200">
-              <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{result.error}</p>
-            </div>
-          )}
-
-          {result?.success === false && !result?.error && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">Validation Errors</p>
-                <p className="text-xs text-amber-600">{result.message}</p>
-                {result.errorCount && <p className="text-xs text-amber-500">{result.errorCount} row(s) with errors — error file downloaded</p>}
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          {/* Upload button */}
+          <div className="flex items-center justify-end">
             <button
               onClick={handleUpload}
               disabled={!selectedFile || uploading}
