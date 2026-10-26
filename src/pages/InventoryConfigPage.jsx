@@ -61,7 +61,6 @@ export default function InventoryConfigPage() {
 
   const handleUpload = async (file) => {
     const res = await mastersApi.uploadInventoryConfig(file)
-    setRefreshSeed((s) => s + 1)
     return res.data
   }
 
@@ -208,6 +207,7 @@ export default function InventoryConfigPage() {
         open={showUpload}
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
+        onSuccess={() => setRefreshSeed((s) => s + 1)}
         title="Upload Inventory Configuration"
         description="Download the template, fill in inventory configurations, and upload."
         fileName="inventory_config_errors.xlsx"

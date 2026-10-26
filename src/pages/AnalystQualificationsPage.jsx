@@ -61,7 +61,6 @@ export default function AnalystQualificationsPage() {
 
   const handleUpload = async (file) => {
     const res = await mastersApi.uploadAnalystQualifications(file)
-    setRefreshSeed((s) => s + 1)
     return res.data
   }
 
@@ -207,6 +206,7 @@ export default function AnalystQualificationsPage() {
         open={showUpload}
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
+        onSuccess={() => setRefreshSeed((s) => s + 1)}
         title="Upload Analyst Qualifications"
         description="Download the template, fill in analyst qualifications, and upload."
         fileName="analyst_qualification_errors.xlsx"

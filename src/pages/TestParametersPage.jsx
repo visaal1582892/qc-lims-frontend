@@ -60,7 +60,6 @@ export default function TestParametersPage() {
 
   const handleUpload = async (file) => {
     const res = await mastersApi.uploadTestParameters(file)
-    setRefreshSeed((s) => s + 1)
     return res.data
   }
 
@@ -208,6 +207,7 @@ export default function TestParametersPage() {
         open={showUpload}
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
+        onSuccess={() => setRefreshSeed((s) => s + 1)}
         title="Upload Test Parameters"
         description="Download the template, fill in test parameters, and upload."
         fileName="test_parameter_errors.xlsx"

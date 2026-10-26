@@ -60,27 +60,28 @@ export default function BulkUploadModal({
     setUploading(true)
     setResult(null)
     try {
-      const res = await onUpload(selectedFile)
-      const data = res.data
+      // onUpload already returns the parsed JSON body (res.data from the parent page)
+      const data = await onUpload(selectedFile)
 
-      if (data.success) {
+      if (data && data.success) {
         setResult({ success: true, message: data.message })
         onSuccess?.()
-        // Auto-close after 1.5s on success
         setTimeout(() => onClose(), 1500)
-      } else {
+      } else if (data && !data.success) {
         setResult({
           success: false,
           message: data.message,
           errorCount: Object.keys(data.errorRows || {}).length,
         })
-        // Download error file if included as base64
         if (data.errorFileBase64) {
           downloadBase64(data.errorFileBase64, fileName)
         }
+      } else {
+        setResult({ error: 'Unexpected server response' })
       }
     } catch (err) {
-      const serverData = err.response?.data
+      // The parent page catches API errors, but handle case where data comes as error
+      const serverData = err.response?.data || err.data || err
       const msg = serverData?.message || serverData?.errorMessage || 'Upload failed'
       setResult({ error: msg })
     } finally {

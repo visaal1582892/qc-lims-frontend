@@ -62,7 +62,6 @@ export default function MetricUnitsPage() {
 
   const handleUpload = async (file) => {
     const res = await mastersApi.uploadMetricUnits(file)
-    setRefreshSeed((s) => s + 1)
     return res.data
   }
 
@@ -213,6 +212,7 @@ export default function MetricUnitsPage() {
         open={showUpload}
         onClose={() => setShowUpload(false)}
         onUpload={handleUpload}
+        onSuccess={() => setRefreshSeed((s) => s + 1)}
         title="Upload Metric Units"
         description="Download the template, fill in metric units, and upload."
         fileName="metric_unit_errors.xlsx"
