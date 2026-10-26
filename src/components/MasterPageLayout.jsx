@@ -16,9 +16,8 @@ import Icon from './Icon'
 export default function MasterPageLayout({ children, className = '' }) {
   return (
     <section
-      className={`flex flex-col overflow-hidden rounded-lg bg-white shadow-sm
+      className={`flex flex-1 min-h-0 flex-col overflow-hidden rounded-lg bg-white shadow-sm
                   ring-1 ring-slate-200/70 ${className}`}
-      style={{ height: 'calc(100vh - 140px)' }}
     >
       {children}
     </section>

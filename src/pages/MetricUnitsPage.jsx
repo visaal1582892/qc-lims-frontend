@@ -125,7 +125,7 @@ export default function MetricUnitsPage() {
 
       {/* Table card — fills remaining vertical space */}
       <MasterPageLayout>
-        <div className="hidden flex-1 min-h-0 overflow-x-auto sm:block">
+        <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
           <table className="w-full min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50">
               <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
