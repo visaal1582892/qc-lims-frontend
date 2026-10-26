@@ -7,11 +7,27 @@ const api = axios.create({
   },
 })
 
-// Request interceptor — attach auth token if available
+/** Extract employee_id from the stored user JSON. */
+function getEmployeeId() {
+  try {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      return user.employee_id ?? user.employeeId ?? null
+    }
+  } catch { /* ignore */ }
+  return null
+}
+
+// Request interceptor — attach auth token and employee ID if available
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  const employeeId = getEmployeeId()
+  if (employeeId) {
+    config.headers['X-Employee-ID'] = employeeId
   }
   return config
 })
@@ -22,6 +38,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('authToken')
+      localStorage.removeItem('user')
       window.location.href = '/login'
     }
     return Promise.reject(error)
