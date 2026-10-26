@@ -54,36 +54,81 @@ export default function BulkUploadModal({
     if (file) validateAndSetFile(file)
   }
 
+  /**
+   * Read a Blob response: if it's JSON, parse and return the object;
+   * otherwise return the raw blob for download.
+   */
+  async function parseBlobResponse(blob) {
+    const ct = blob.type || ''
+    if (ct.includes('json') || ct.includes('application/json')) {
+      const text = await blob.text()
+      return JSON.parse(text)
+    }
+    return blob
+  }
+
   const handleUpload = async () => {
     if (!selectedFile || uploading) return
     setUploading(true)
     setResult(null)
     try {
-      const data = await onUpload(selectedFile)
-      if (data.success) {
-        setResult({ success: true, message: data.message })
-      } else {
-        setResult({
-          success: false,
-          message: data.message,
-          errorCount: Object.keys(data.errors || {}).length,
-        })
-        // If the response is the error file blob, handle it
-        if (data.errorFileBase64) {
-          downloadBase64(data.errorFileBase64, fileName)
+      const res = await onUpload(selectedFile)
+      // Axios with responseType: 'blob' always returns response.data as a Blob
+      const blob = res.data
+      const parsed = await parseBlobResponse(blob)
+
+      if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+        // JSON response
+        if (parsed.success) {
+          setResult({ success: true, message: parsed.message })
+        } else {
+          setResult({
+            success: false,
+            message: parsed.message,
+            errorCount: Object.keys(parsed.errors || {}).length,
+          })
+          if (parsed.errorFileBase64) {
+            downloadBase64(parsed.errorFileBase64, fileName)
+          }
         }
+      } else {
+        // Unexpected response shape
+        setResult({ error: 'Unexpected server response' })
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.errorMessage || 'Upload failed'
-      setResult({ error: msg })
-      // If the error response is a blob (error file), download it
-      if (err.response?.data instanceof Blob) {
-        const url = URL.createObjectURL(err.response.data)
-        const a = document.createElement('a')
-        a.href = url; a.download = fileName
-        document.body.appendChild(a); a.click(); document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-        setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
+      // 4xx/5xx — the blob may be the error Excel file
+      const blob = err.response?.data
+      if (blob instanceof Blob) {
+        try {
+          const parsed = await parseBlobResponse(blob)
+          if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+            // JSON error
+            setResult({
+              success: false,
+              message: parsed.message || 'Validation failed',
+              errorCount: Object.keys(parsed.errors || {}).length,
+            })
+          } else {
+            // Binary error file (Excel) — download it
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url; a.download = fileName
+            document.body.appendChild(a); a.click(); document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+            setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
+          }
+        } catch {
+          // Fallback: treat raw blob as error file
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url; a.download = fileName
+          document.body.appendChild(a); a.click(); document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+          setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
+        }
+      } else {
+        const msg = err.response?.data?.message || err.response?.data?.errorMessage || 'Upload failed'
+        setResult({ error: msg })
       }
     } finally {
       setUploading(false)
