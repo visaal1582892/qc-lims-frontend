@@ -55,16 +55,24 @@ export default function BulkUploadModal({
   }
 
   /**
-   * Read a Blob response: if it's JSON, parse and return the object;
-   * otherwise return the raw blob for download.
+   * Try to parse a Blob as JSON. If it looks like JSON text, return the
+   * parsed object. Otherwise return the raw blob (it's a binary file like
+   * an Excel error report).
    */
   async function parseBlobResponse(blob) {
-    const ct = blob.type || ''
-    if (ct.includes('json') || ct.includes('application/json')) {
+    try {
       const text = await blob.text()
-      return JSON.parse(text)
+      const obj = JSON.parse(text)
+      return obj
+    } catch {
+      // Not JSON — treat as a binary file (Excel error report)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = fileName
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      return { __downloaded: true }
     }
-    return blob
   }
 
   const handleUpload = async () => {
@@ -77,8 +85,12 @@ export default function BulkUploadModal({
       const blob = res.data
       const parsed = await parseBlobResponse(blob)
 
+      if (parsed?.__downloaded) {
+        setResult({ success: false, message: 'Unexpected file response from server.', errorCount: 0 })
+        return
+      }
+
       if (parsed && typeof parsed === 'object' && 'success' in parsed) {
-        // JSON response
         if (parsed.success) {
           setResult({ success: true, message: parsed.message })
         } else {
@@ -92,39 +104,21 @@ export default function BulkUploadModal({
           }
         }
       } else {
-        // Unexpected response shape
         setResult({ error: 'Unexpected server response' })
       }
     } catch (err) {
-      // 4xx/5xx — the blob may be the error Excel file
+      // 4xx/5xx — the blob is the error Excel file
       const blob = err.response?.data
       if (blob instanceof Blob) {
-        try {
-          const parsed = await parseBlobResponse(blob)
-          if (parsed && typeof parsed === 'object' && 'success' in parsed) {
-            // JSON error
-            setResult({
-              success: false,
-              message: parsed.message || 'Validation failed',
-              errorCount: Object.keys(parsed.errors || {}).length,
-            })
-          } else {
-            // Binary error file (Excel) — download it
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url; a.download = fileName
-            document.body.appendChild(a); a.click(); document.body.removeChild(a)
-            URL.revokeObjectURL(url)
-            setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
-          }
-        } catch {
-          // Fallback: treat raw blob as error file
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url; a.download = fileName
-          document.body.appendChild(a); a.click(); document.body.removeChild(a)
-          URL.revokeObjectURL(url)
+        const parsed = await parseBlobResponse(blob)
+        if (parsed?.__downloaded) {
           setResult({ success: false, message: 'Validation errors found. Error file downloaded.', errorCount: 1 })
+        } else if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+          setResult({
+            success: false,
+            message: parsed.message || 'Validation failed',
+            errorCount: Object.keys(parsed.errors || {}).length,
+          })
         }
       } else {
         const msg = err.response?.data?.message || err.response?.data?.errorMessage || 'Upload failed'
