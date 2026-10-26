@@ -53,7 +53,7 @@ export default function AppLayout() {
   const visibleAdmin = useMemo(() => {
     return ADMIN_NAV_LINKS.filter((item) => {
       if (!item.rights) return true
-      return item.rights.some((r) => hasRight(r))
+      return hasRight('ROLE_SYSTEM_ADMIN') || item.rights.some((r) => hasRight(r))
     })
   }, [hasRight])
 
