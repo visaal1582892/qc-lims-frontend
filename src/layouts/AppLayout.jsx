@@ -101,44 +101,17 @@ export default function AppLayout() {
 
         {/* Nav */}
         <nav className={`flex-1 overflow-hidden overflow-y-auto py-2.5 ${collapsed ? 'px-2 space-y-2' : 'px-2.5 space-y-3'}`}>
-          {/* Section 1: Overview */}
-          {visibleOverview.length > 0 && (
-            <div className="space-y-0.5">
-              {visibleOverview.map(item => (
-                <SidebarLink
-                  key={item.to}
-                  to={item.to}
-                  label={item.label}
-                  icon={item.icon}
-                  collapsed={collapsed}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Section 2: Masters */}
-          {visibleAdmin.length > 0 && (
-            <div>
-              {!collapsed ? (
-                <div className="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
-                  Masters
-                </div>
-              ) : (
-                <div className="my-1.5 mx-2 border-t border-slate-200/80" />
-              )}
-              <div className="space-y-0.5">
-                {visibleAdmin.map(item => (
-                  <SidebarLink
-                    key={item.to}
-                    to={item.to}
-                    label={item.label}
-                    icon={item.icon}
-                    collapsed={collapsed}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="space-y-0.5">
+            {[...visibleOverview, ...visibleAdmin].map(item => (
+              <SidebarLink
+                key={item.to}
+                to={item.to}
+                label={item.label}
+                icon={item.icon}
+                collapsed={collapsed}
+              />
+            ))}
+          </div>
         </nav>
 
         {/* Footer: sign out */}
