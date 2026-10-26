@@ -38,7 +38,7 @@ export default function AppLayout() {
 
   const collapsed    = !(hovered || mobileOpen)
   const sidebarWidth = (hovered || mobileOpen) ? 'w-64' : 'w-[72px]'
-  const padded       = 'lg:pl-[72px]'
+  const padded       = hovered ? 'lg:pl-64' : 'lg:pl-[72px]'
 
   // Determine header title from route
   const navHeader = useMemo(() => {
