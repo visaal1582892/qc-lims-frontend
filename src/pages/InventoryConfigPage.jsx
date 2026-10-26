@@ -6,10 +6,10 @@ import BulkUploadModal from '../components/masters/BulkUploadModal'
 import Icon from '../components/Icon'
 import Pagination from '../components/Pagination'
 import BackToMaster from '../components/admin/BackToMaster'
-import { TableStatusRow } from '../components/dataTable'
+import MasterPageLayout, {
+  FilterInput, FilterSelect, StatusPill, TableStatusRow,
+} from '../components/MasterPageLayout'
 import useDebounce from '../hooks/useDebounce'
-
-const PAGE_SIZE = 20
 
 export default function InventoryConfigPage() {
   const { hasRight } = useAuth()
@@ -18,7 +18,7 @@ export default function InventoryConfigPage() {
   const [totalPages, setTotalPages]      = useState(0)
   const [loading, setLoading]            = useState(true)
   const [page, setPage]                  = useState(0)
-  const [pageSize, setPageSize]          = useState(PAGE_SIZE)
+  const [pageSize, setPageSize]          = useState(20)
   const [refreshSeed, setRefreshSeed]    = useState(0)
   const [showUpload, setShowUpload]      = useState(false)
 
@@ -81,9 +81,10 @@ export default function InventoryConfigPage() {
   const canUpload = hasRight(Rights.ROLE_INVENTORY_CONFIG_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
+    <div className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-5">
       <BackToMaster />
-      <header className="flex flex-wrap items-center justify-between gap-3">
+
+      <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg
                            bg-amber-50 text-amber-600 ring-1 ring-amber-100">
@@ -120,8 +121,8 @@ export default function InventoryConfigPage() {
         </div>
       </header>
 
-      <section className="rounded-lg bg-white shadow-sm ring-1 ring-slate-200/70">
-        <div className="hidden w-full overflow-x-auto sm:block">
+      <MasterPageLayout>
+        <div className="hidden flex-1 min-h-0 overflow-x-auto sm:block">
           <table className="w-full min-w-full text-sm">
             <thead className="sticky top-0 z-10 bg-slate-50">
               <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
@@ -161,14 +162,10 @@ export default function InventoryConfigPage() {
               )}
             </tbody>
           </table>
-          <div className="border-t border-slate-100 px-4 py-1">
-            <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
-          </div>
         </div>
 
         {/* Mobile */}
-        <div className="block divide-y divide-slate-100 sm:hidden">
+        <div className="block flex-1 min-h-0 overflow-y-auto sm:hidden">
           <div className="space-y-2 p-3">
             <FilterInput value={fProductId} onChange={setProductId} placeholder="Search Product ID…" icon="search" />
             <div className="grid grid-cols-2 gap-2">
@@ -197,12 +194,14 @@ export default function InventoryConfigPage() {
               </div>
             ))
           )}
-          <div className="px-4 py-1">
-            <Pagination page={page} totalPages={totalPages} totalElements={total}
-              pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
-          </div>
         </div>
-      </section>
+
+        {/* Pagination — pinned at bottom */}
+        <div className="shrink-0 border-t border-slate-100 px-4 py-1">
+          <Pagination page={page} totalPages={totalPages} totalElements={total}
+            pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+        </div>
+      </MasterPageLayout>
 
       <BulkUploadModal
         open={showUpload}
@@ -233,56 +232,5 @@ function InventoryRow({ item }) {
       <td className={`px-4 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.countNeeded}</td>
       <td className="px-4 py-2.5"><StatusPill active={active} /></td>
     </tr>
-  )
-}
-
-function FilterInput({ value, onChange, placeholder, icon }) {
-  return (
-    <div className="relative">
-      {icon && (
-        <Icon name={icon}
-              className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-      )}
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className={`w-full rounded-md border border-slate-200 bg-white py-1.5
-                    text-xs text-slate-700 shadow-sm placeholder:text-slate-400
-                    focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100
-                    ${icon ? 'pl-8 pr-2.5' : 'px-2.5'}`}
-      />
-    </div>
-  )
-}
-
-function FilterSelect({ value, onChange, options }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-md border border-slate-200 bg-white py-1.5 pl-2.5 pr-7
-                 text-xs text-slate-700 shadow-sm appearance-none cursor-pointer
-                 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100
-                 bg-[url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%2394a3b8%22 d=%22M6 8L1 3h10z%22/></svg>')] bg-[right_0.5rem_center] bg-no-repeat"
-    >
-      {options.map(([val, label]) => (
-        <option key={val} value={val}>{label}</option>
-      ))}
-    </select>
-  )
-}
-
-function StatusPill({ active }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium
-                  ${active
-                    ? 'bg-accent-50 text-accent-700 ring-1 ring-accent-200'
-                    : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'}`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-accent-500' : 'bg-slate-400'}`} />
-      {active ? 'Active' : 'Inactive'}
-    </span>
   )
 }
