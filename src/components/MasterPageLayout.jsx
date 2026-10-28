@@ -36,7 +36,7 @@ export function MasterPageTable({ children, pagination }) {
   return (
     <>
       {/* Desktop / tablet */}
-      <div className="hidden flex-1 min-h-0 overflow-x-auto sm:block">
+      <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
         <table className="w-full min-w-full text-sm">
           {children}
         </table>
@@ -44,11 +44,42 @@ export function MasterPageTable({ children, pagination }) {
 
       {/* Pagination bar — pinned at bottom */}
       {pagination && (
-        <div className="shrink-0 border-t border-slate-100 px-4 py-1">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-1">
           {pagination}
         </div>
       )}
     </>
+  )
+}
+
+/* ─── Table Header Components (DRY, stationary sticky borders) ─── */
+
+export function MasterTableHeader({ children, className = '' }) {
+  return (
+    <thead className={`sticky top-0 z-10 bg-slate-50 ${className}`}>
+      {children}
+    </thead>
+  )
+}
+
+export function MasterHeaderRow({ children, className = '' }) {
+  return (
+    <tr
+      className={`bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider
+                  text-slate-500 [&>th]:bg-slate-50 [&>th]:shadow-[inset_0_-1px_0_#e2e8f0] ${className}`}
+    >
+      {children}
+    </tr>
+  )
+}
+
+export function MasterFilterRow({ children, className = '' }) {
+  return (
+    <tr
+      className={`bg-slate-50 [&>th]:bg-slate-50 [&>th]:shadow-[inset_0_-1px_0_#e2e8f0] ${className}`}
+    >
+      {children}
+    </tr>
   )
 }
 

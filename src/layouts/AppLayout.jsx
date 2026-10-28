@@ -21,14 +21,14 @@ const OVERVIEW_NAV_LINKS = [
 ]
 
 const ADMIN_NAV_LINKS = [
-  { to: '/masters', label: 'Masters', icon: 'cog', rights: ['ROLE_MASTER_DATA_READ', 'ROLE_MASTER_DATA_CREATE', 'ROLE_MASTER_DATA_UPDATE', 'ROLE_MASTER_DATA_DELETE', 'ROLE_METRIC_UNIT_READ', 'ROLE_TEST_PARAMETER_READ', 'ROLE_QUALIFICATION_READ', 'ROLE_INVENTORY_CONFIG_READ'] },
+  { to: '/masters', label: 'Masters', icon: 'cog', rights: ['ROLE_MASTER_DATA_READ', 'ROLE_MASTER_DATA_CREATE', 'ROLE_MASTER_DATA_UPDATE', 'ROLE_MASTER_DATA_DELETE', 'ROLE_METRIC_READ', 'ROLE_TEST_PARAMETER_READ', 'ROLE_QUALIFICATION_READ', 'ROLE_INVENTORY_CONFIG_READ', 'ROLE_METRIC_SPECIFICATION_READ'] },
 ]
 
 export default function AppLayout() {
   const { user, logout, hasRight } = useAuth()
   const location = useLocation()
 
-  const [hovered, setHovered]     = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -44,9 +44,9 @@ export default function AppLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const collapsed    = !(hovered || mobileOpen)
+  const collapsed = !(hovered || mobileOpen)
   const sidebarWidth = (hovered || mobileOpen) ? 'w-64' : 'w-[72px]'
-  const padded       = hovered ? 'lg:pl-64' : 'lg:pl-[72px]'
+  const padded = hovered ? 'lg:pl-64' : 'lg:pl-[72px]'
 
   // Filter nav links by user rights
   const visibleOverview = useMemo(() => OVERVIEW_NAV_LINKS, [])
@@ -66,7 +66,7 @@ export default function AppLayout() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800">
+    <div className="h-screen overflow-hidden bg-slate-100 text-slate-800">
       {/* ============ SIDEBAR ============ */}
       <aside
         onMouseEnter={() => setHovered(true)}
@@ -118,11 +118,10 @@ export default function AppLayout() {
         <div className="shrink-0 border-t border-slate-100 p-2 bg-slate-50/40">
           <button
             onClick={() => logout()}
-            className={`group relative flex w-full items-center rounded-xl text-slate-500 transition-all duration-150 hover:bg-rose-50 hover:text-rose-600 ${
-              collapsed
+            className={`group relative flex w-full items-center rounded-xl text-slate-500 transition-all duration-150 hover:bg-rose-50 hover:text-rose-600 ${collapsed
                 ? 'mx-auto h-9 w-9 justify-center'
                 : 'px-3 py-2 text-xs font-medium gap-2.5'
-            }`}
+              }`}
           >
             <Icon name="logOut" className="h-[18px] w-[18px] shrink-0 group-hover:scale-110 transition-transform" />
             {!collapsed && <span className="font-medium">Sign out</span>}
@@ -147,7 +146,7 @@ export default function AppLayout() {
       )}
 
       {/* ============ MAIN COLUMN ============ */}
-      <div className={`flex h-screen flex-col transition-[padding] duration-200 ${padded}`}>
+      <div className={`flex h-screen flex-col transition-[padding] duration-200 overflow-hidden ${padded}`}>
         {/* Header */}
         <header className="sticky top-0 z-[50] flex h-[60px] items-center justify-between
                            border-b border-slate-100 bg-white/95 px-4 backdrop-blur-sm
@@ -223,8 +222,8 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="flex flex-1 min-h-0 flex-col overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
-          <div className="min-h-0 flex-1 overflow-hidden">
+        <main className="flex flex-1 min-h-0 flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+          <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
             <Outlet />
           </div>
         </main>
@@ -243,16 +242,14 @@ function SidebarLink({ to, label, icon, collapsed }) {
       to={to}
       end
       className={({ isActive }) =>
-        `group relative flex items-center transition-all duration-150 select-none ${
-          collapsed
-            ? 'mx-auto justify-center h-9 w-9 rounded-xl my-0.5'
-            : 'rounded-lg my-0.5 px-3 py-2 text-[13.5px] font-medium'
-        } ${
-          isActive
-            ? collapsed
-              ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200/80 shadow-xs'
-              : 'bg-gradient-to-r from-brand-50 to-brand-50/20 text-brand-700 font-semibold'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+        `group relative flex items-center transition-all duration-150 select-none ${collapsed
+          ? 'mx-auto justify-center h-9 w-9 rounded-xl my-0.5'
+          : 'rounded-lg my-0.5 px-3 py-2 text-[13.5px] font-medium'
+        } ${isActive
+          ? collapsed
+            ? 'bg-brand-50 text-brand-600 ring-1 ring-brand-200/80 shadow-xs'
+            : 'bg-gradient-to-r from-brand-50 to-brand-50/20 text-brand-700 font-semibold'
+          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
         }`
       }
     >
@@ -265,11 +262,10 @@ function SidebarLink({ to, label, icon, collapsed }) {
 
           {/* Icon */}
           <span
-            className={`relative flex items-center justify-center shrink-0 transition-transform duration-150 ${
-              isActive
+            className={`relative flex items-center justify-center shrink-0 transition-transform duration-150 ${isActive
                 ? 'text-brand-600'
                 : 'text-slate-500 group-hover:text-slate-800 group-hover:scale-110'
-            }`}
+              }`}
           >
             <Icon
               name={icon}

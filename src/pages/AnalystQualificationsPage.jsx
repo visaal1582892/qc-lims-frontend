@@ -8,17 +8,19 @@ import Pagination from '../components/Pagination'
 import BackToMaster from '../components/admin/BackToMaster'
 import MasterPageLayout, {
   FilterInput, FilterSelect, StatusPill, TableStatusRow,
+  MasterTableHeader, MasterHeaderRow, MasterFilterRow,
 } from '../components/MasterPageLayout'
 import useDebounce from '../hooks/useDebounce'
 
 export default function AnalystQualificationsPage() {
   const { hasRight } = useAuth()
+  const PAGE_SIZE = 20
+
   const [items, setItems]                = useState([])
   const [total, setTotal]                = useState(0)
   const [totalPages, setTotalPages]      = useState(0)
   const [loading, setLoading]            = useState(true)
   const [page, setPage]                  = useState(0)
-  const [pageSize, setPageSize]          = useState(20)
   const [refreshSeed, setRefreshSeed]    = useState(0)
   const [showUpload, setShowUpload]      = useState(false)
 
@@ -32,31 +34,32 @@ export default function AnalystQualificationsPage() {
   const dEmployeeId = useDebounce(fEmployeeId, 400)
   const dParameter  = useDebounce(fParameter,  400)
 
-  useEffect(() => { setPage(0) }, [dId, dEmployeeId, dParameter, fStatus, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0) }, [dId, dEmployeeId, dParameter, fStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await mastersApi.getAnalystQualifications({
         page,
-        size: pageSize,
-        sort: 'employeeId,asc',
+        size: PAGE_SIZE,
+        sort: 'updatedAt,desc',
         id: dId || undefined,
         employeeId: dEmployeeId || undefined,
         parameterName: dParameter || undefined,
-        includeInactive: fStatus === 'all' ? undefined : fStatus === 'inactive',
+        status: fStatus !== 'all' ? fStatus : undefined,
+        includeInactive: fStatus === 'all' ? true : undefined,
       })
-      if (res.data?.content) {
-        setItems(res.data.content)
-        setTotalPages(res.data.totalPages || 0)
-        setTotal(res.data.totalElements || 0)
+      if (res.data) {
+        setItems(res.data.content || [])
+        setTotalPages(res.data.totalPages ?? res.data.page?.totalPages ?? 0)
+        setTotal(res.data.totalElements ?? res.data.page?.totalElements ?? 0)
       }
     } catch (err) {
       console.error('Failed to load analyst qualifications:', err)
     } finally {
       setLoading(false)
     }
-  }, [page, dId, dEmployeeId, dParameter, fStatus, refreshSeed, pageSize])
+  }, [page, dId, dEmployeeId, dParameter, fStatus, refreshSeed])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -81,8 +84,8 @@ export default function AnalystQualificationsPage() {
   const canUpload = hasRight(Rights.ROLE_QUALIFICATION_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
-    <div className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-5">
-      <BackToMaster />
+    <div className="mx-auto flex h-full min-h-0 w-full flex-1 flex-col gap-3">
+      <BackToMaster className="shrink-0" />
 
       <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -124,16 +127,15 @@ export default function AnalystQualificationsPage() {
       <MasterPageLayout>
         <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
           <table className="w-full min-w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-slate-50">
-              <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
-                              tracking-wider text-slate-500">
+            <MasterTableHeader>
+              <MasterHeaderRow>
                 <th className="w-24 px-4 py-2.5">ID</th>
                 <th className="px-4 py-2.5">Employee ID</th>
                 <th className="px-4 py-2.5">Test Parameter</th>
                 <th className="w-36 px-4 py-2.5">Qualified On</th>
                 <th className="w-28 px-4 py-2.5">Status</th>
-              </tr>
-              <tr className="border-y border-slate-100 bg-slate-50/40">
+              </MasterHeaderRow>
+              <MasterFilterRow>
                 <th className="px-4 py-2">
                   <FilterInput value={fId} onChange={setFId} placeholder="Filter ID…" />
                 </th>
@@ -148,8 +150,8 @@ export default function AnalystQualificationsPage() {
                   <FilterSelect value={fStatus} onChange={setFStatus}
                     options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
                 </th>
-              </tr>
-            </thead>
+              </MasterFilterRow>
+            </MasterTableHeader>
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
                 <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
@@ -196,9 +198,9 @@ export default function AnalystQualificationsPage() {
         </div>
 
         {/* Pagination — pinned at bottom */}
-        <div className="shrink-0 border-t border-slate-100 px-4 py-1">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-1">
           <Pagination page={page} totalPages={totalPages} totalElements={total}
-            pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            pageSize={PAGE_SIZE} onPageChange={setPage} loading={loading} />
         </div>
       </MasterPageLayout>
 

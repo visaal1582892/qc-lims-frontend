@@ -223,6 +223,7 @@ const icons = {
   check: Check,
   checkCircle2: CheckCircle2,
   checkSquare: CheckSquare,
+  chevron: ChevronRight,
   chevronDown: ChevronDown,
   chevronLeft: ChevronLeft,
   chevronRight: ChevronRight,

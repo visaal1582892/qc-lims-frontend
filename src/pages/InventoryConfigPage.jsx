@@ -8,17 +8,19 @@ import Pagination from '../components/Pagination'
 import BackToMaster from '../components/admin/BackToMaster'
 import MasterPageLayout, {
   FilterInput, FilterSelect, StatusPill, TableStatusRow,
+  MasterTableHeader, MasterHeaderRow, MasterFilterRow,
 } from '../components/MasterPageLayout'
 import useDebounce from '../hooks/useDebounce'
 
 export default function InventoryConfigPage() {
   const { hasRight } = useAuth()
+  const PAGE_SIZE = 20
+
   const [items, setItems]                = useState([])
   const [total, setTotal]                = useState(0)
   const [totalPages, setTotalPages]      = useState(0)
   const [loading, setLoading]            = useState(true)
   const [page, setPage]                  = useState(0)
-  const [pageSize, setPageSize]          = useState(20)
   const [refreshSeed, setRefreshSeed]    = useState(0)
   const [showUpload, setShowUpload]      = useState(false)
 
@@ -26,37 +28,43 @@ export default function InventoryConfigPage() {
   const [fId, setFId]             = useState('')
   const [fProductId, setProductId]  = useState('')
   const [fParameter, setParameter]    = useState('')
+  const [fTestMethodId, setTestMethodId] = useState('')
+  const [fResultType, setResultType]     = useState('all')
   const [fStatus, setFStatus]     = useState('all')
 
   const dId         = useDebounce(fId,         400)
   const dProductId  = useDebounce(fProductId,  400)
   const dParameter  = useDebounce(fParameter,  400)
+  const dTestMethod = useDebounce(fTestMethodId, 400)
 
-  useEffect(() => { setPage(0) }, [dId, dProductId, dParameter, fStatus, pageSize]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(0) }, [dId, dProductId, dParameter, dTestMethod, fResultType, fStatus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
     try {
       const res = await mastersApi.getInventoryConfig({
         page,
-        size: pageSize,
-        sort: 'productId,asc',
+        size: PAGE_SIZE,
+        sort: 'updatedAt,desc',
         id: dId || undefined,
         productId: dProductId || undefined,
         parameterName: dParameter || undefined,
-        includeInactive: fStatus === 'all' ? undefined : fStatus === 'inactive',
+        testMethodId: dTestMethod || undefined,
+        resultType: fResultType !== 'all' ? fResultType : undefined,
+        status: fStatus !== 'all' ? fStatus : undefined,
+        includeInactive: fStatus === 'all' ? true : undefined,
       })
-      if (res.data?.content) {
-        setItems(res.data.content)
-        setTotalPages(res.data.totalPages || 0)
-        setTotal(res.data.totalElements || 0)
+      if (res.data) {
+        setItems(res.data.content || [])
+        setTotalPages(res.data.totalPages ?? res.data.page?.totalPages ?? 0)
+        setTotal(res.data.totalElements ?? res.data.page?.totalElements ?? 0)
       }
     } catch (err) {
       console.error('Failed to load inventory configurations:', err)
     } finally {
       setLoading(false)
     }
-  }, [page, dId, dProductId, dParameter, fStatus, refreshSeed, pageSize])
+  }, [page, dId, dProductId, dParameter, dTestMethod, fResultType, fStatus, refreshSeed])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
@@ -81,8 +89,8 @@ export default function InventoryConfigPage() {
   const canUpload = hasRight(Rights.ROLE_INVENTORY_CONFIG_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
   return (
-    <div className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-5">
-      <BackToMaster />
+    <div className="mx-auto flex h-full min-h-0 w-full flex-1 flex-col gap-3">
+      <BackToMaster className="shrink-0" />
 
       <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -124,37 +132,49 @@ export default function InventoryConfigPage() {
       <MasterPageLayout>
         <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
           <table className="w-full min-w-full text-sm">
-            <thead className="sticky top-0 z-10 bg-slate-50">
-              <tr className="bg-slate-50/70 text-left text-xs font-semibold uppercase
-                              tracking-wider text-slate-500">
-                <th className="w-24 px-4 py-2.5">ID</th>
-                <th className="px-4 py-2.5">Product ID</th>
-                <th className="px-4 py-2.5">Test Parameter</th>
-                <th className="w-32 px-4 py-2.5">Count Needed</th>
-                <th className="w-28 px-4 py-2.5">Status</th>
-              </tr>
-              <tr className="border-y border-slate-100 bg-slate-50/40">
-                <th className="px-4 py-2">
+            <MasterTableHeader>
+              <MasterHeaderRow>
+                <th className="w-20 px-3 py-2.5">ID</th>
+                <th className="px-3 py-2.5">Product ID</th>
+                <th className="px-3 py-2.5">Test Parameter</th>
+                <th className="px-3 py-2.5">Test Method</th>
+                <th className="w-20 px-3 py-2.5 text-center">Critical</th>
+                <th className="w-24 px-3 py-2.5 text-center">Count</th>
+                <th className="w-28 px-3 py-2.5">Result Type</th>
+                <th className="px-3 py-2.5">Specification</th>
+                <th className="w-24 px-3 py-2.5">Status</th>
+              </MasterHeaderRow>
+              <MasterFilterRow>
+                <th className="px-3 py-2">
                   <FilterInput value={fId} onChange={setFId} placeholder="Filter ID…" />
                 </th>
-                <th className="px-4 py-2">
+                <th className="px-3 py-2">
                   <FilterInput value={fProductId} onChange={setProductId} placeholder="Filter Product ID…" icon="search" />
                 </th>
-                <th className="px-4 py-2">
+                <th className="px-3 py-2">
                   <FilterInput value={fParameter} onChange={setParameter} placeholder="Search parameter…" icon="search" />
                 </th>
+                <th className="px-3 py-2">
+                  <FilterInput value={fTestMethodId} onChange={setTestMethodId} placeholder="Filter Method…" icon="search" />
+                </th>
                 <th />
-                <th className="px-4 py-2">
+                <th />
+                <th className="px-3 py-2">
+                  <FilterSelect value={fResultType} onChange={setResultType}
+                    options={[['all','All'],['METRICS','METRICS'],['TEXT','TEXT']]} />
+                </th>
+                <th />
+                <th className="px-3 py-2">
                   <FilterSelect value={fStatus} onChange={setFStatus}
                     options={[['all','All'],['active','Active'],['inactive','Inactive']]} />
                 </th>
-              </tr>
-            </thead>
+              </MasterFilterRow>
+            </MasterTableHeader>
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <TableStatusRow colSpan={5}>Loading…</TableStatusRow>
+                <TableStatusRow colSpan={9}>Loading…</TableStatusRow>
               ) : items.length === 0 ? (
-                <TableStatusRow colSpan={5}>No matching records.</TableStatusRow>
+                <TableStatusRow colSpan={9}>No matching records.</TableStatusRow>
               ) : (
                 items.map((item) => (
                   <InventoryRow key={item.id} item={item} />
@@ -185,11 +205,19 @@ export default function InventoryConfigPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs text-slate-500">{item.productId}</span>
                     <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-600">{item.testMethodId}</span>
                   </div>
-                  <div className="mt-1.5 flex items-center gap-2">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <StatusPill active={isItemActive(item)} />
+                    <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${item.isCritical === 'Y' ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-500'}`}>
+                      {item.isCritical === 'Y' ? 'Critical' : 'Non-Critical'}
+                    </span>
                     <span className="text-xs text-slate-500">Count: {item.countNeeded}</span>
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700 font-medium">{item.resultType}</span>
                   </div>
+                  {item.specificationText && (
+                    <p className="mt-1 text-xs text-slate-600 italic truncate max-w-xs">{item.specificationText}</p>
+                  )}
                 </div>
               </div>
             ))
@@ -197,9 +225,9 @@ export default function InventoryConfigPage() {
         </div>
 
         {/* Pagination — pinned at bottom */}
-        <div className="shrink-0 border-t border-slate-100 px-4 py-1">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-1">
           <Pagination page={page} totalPages={totalPages} totalElements={total}
-            pageSize={pageSize} onPageChange={setPage} onPageSizeChange={setPageSize} />
+            pageSize={PAGE_SIZE} onPageChange={setPage} loading={loading} />
         </div>
       </MasterPageLayout>
 
@@ -226,11 +254,25 @@ function InventoryRow({ item }) {
   const active = isItemActive(item)
   return (
     <tr className={`transition hover:bg-slate-50/60 ${!active ? 'bg-slate-50/50 opacity-75' : ''}`}>
-      <td className="px-4 py-2.5 font-mono text-xs text-slate-600">{item.id}</td>
-      <td className={`px-4 py-2.5 font-medium text-slate-800 ${!active ? 'line-through text-slate-400' : ''}`}>{item.productId}</td>
-      <td className={`px-4 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</td>
-      <td className={`px-4 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.countNeeded}</td>
-      <td className="px-4 py-2.5"><StatusPill active={active} /></td>
+      <td className="px-3 py-2.5 font-mono text-xs text-slate-600">{item.id}</td>
+      <td className={`px-3 py-2.5 font-medium text-slate-800 ${!active ? 'line-through text-slate-400' : ''}`}>{item.productId}</td>
+      <td className={`px-3 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</td>
+      <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{item.testMethodId || '-'}</td>
+      <td className="px-3 py-2.5 text-center">
+        <span className={`inline-flex rounded px-1.5 py-0.5 text-xs font-semibold ${item.isCritical === 'Y' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+          {item.isCritical === 'Y' ? 'Y' : 'N'}
+        </span>
+      </td>
+      <td className="px-3 py-2.5 text-center text-slate-600">{item.countNeeded}</td>
+      <td className="px-3 py-2.5">
+        <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${item.resultType === 'METRICS' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>
+          {item.resultType || 'TEXT'}
+        </span>
+      </td>
+      <td className="px-3 py-2.5 text-xs text-slate-600 max-w-xs truncate" title={item.specificationText || ''}>
+        {item.specificationText || '-'}
+      </td>
+      <td className="px-3 py-2.5"><StatusPill active={active} /></td>
     </tr>
   )
 }

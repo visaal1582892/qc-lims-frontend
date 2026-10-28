@@ -12,7 +12,7 @@ export const MASTER_HUB_SECTIONS = [
     icon: 'scale',
     accent: 'brand',
     items: [
-      { label: 'Metric Units',       to: '/masters/metric-units',              icon: 'scale',         right: 'ROLE_METRIC_UNIT_READ' },
+      { label: 'Metrics',            to: '/masters/metrics',                   icon: 'scale',         right: 'ROLE_METRIC_READ' },
       { label: 'Test Parameters',    to: '/masters/test-parameters',           icon: 'flaskConical',  right: 'ROLE_TEST_PARAMETER_READ' },
     ],
   },
@@ -25,6 +25,7 @@ export const MASTER_HUB_SECTIONS = [
     items: [
       { label: 'Analyst Qualifications',    to: '/masters/analyst-qualifications', icon: 'graduationCap', right: 'ROLE_QUALIFICATION_READ' },
       { label: 'QC Inventory Configuration', to: '/masters/inventory-config',      icon: 'package2',      right: 'ROLE_INVENTORY_CONFIG_READ' },
+      { label: 'Metric Specifications',     to: '/masters/metric-specifications',  icon: 'slidersHorizontal', right: 'ROLE_METRIC_SPECIFICATION_READ' },
     ],
   },
 ]
