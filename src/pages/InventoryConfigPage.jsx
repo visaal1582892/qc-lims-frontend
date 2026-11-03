@@ -88,6 +88,20 @@ export default function InventoryConfigPage() {
 
   const canUpload = hasRight(Rights.ROLE_INVENTORY_CONFIG_UPLOAD) || hasRight(Rights.ROLE_MASTER_DATA_CREATE)
 
+  const hasActiveFilters = Boolean(
+    fId || fProductId || fParameter || fTestMethodId || fResultType !== 'all' || fStatus !== 'all'
+  )
+
+  const handleClearFilters = () => {
+    setFId('')
+    setProductId('')
+    setParameter('')
+    setTestMethodId('')
+    setResultType('all')
+    setFStatus('all')
+    setPage(0)
+  }
+
   return (
     <div className="mx-auto flex h-full min-h-0 w-full flex-1 flex-col gap-3">
       <BackToMaster className="shrink-0" />
@@ -104,6 +118,16 @@ export default function InventoryConfigPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            disabled={!hasActiveFilters}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-xs transition hover:bg-slate-50 disabled:opacity-40 active:scale-[0.98]"
+            title="Clear all filters"
+          >
+            <Icon name="rotateCcw" className="h-3.5 w-3.5" />
+            Clear Filters
+          </button>
           {canUpload && (
             <>
               <button

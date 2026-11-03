@@ -19,6 +19,7 @@ export function ToastProvider({ children }) {
     error: (m) => push(m, 'error'),
     warning: (m) => push(m, 'warning'),
     info: (m) => push(m, 'info'),
+    addToast: (type, m, timeoutMs) => push(m, type, timeoutMs),
   }
 
   return (

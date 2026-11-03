@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import Icon from './Icon'
 
 /**
@@ -105,7 +106,7 @@ export function FilterInput({ value, onChange, placeholder, icon }) {
   )
 }
 
-export function FilterSelect({ value, onChange, options }) {
+export function FilterSelect({ value, onChange, options = [] }) {
   return (
     <select
       value={value}
@@ -115,9 +116,11 @@ export function FilterSelect({ value, onChange, options }) {
                  focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100
                  bg-[url('data:image/svg+xml;charset=US-ASCII,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%2394a3b8%22 d=%22M6 8L1 3h10z%22/></svg>')] bg-[right_0.5rem_center] bg-no-repeat"
     >
-      {options.map(([val, label]) => (
-        <option key={val} value={val}>{label}</option>
-      ))}
+      {options.map((opt) => {
+        const val = Array.isArray(opt) ? opt[0] : (opt?.value ?? '')
+        const label = Array.isArray(opt) ? opt[1] : (opt?.label ?? '')
+        return <option key={val} value={val}>{label}</option>
+      })}
     </select>
   )
 }
@@ -137,13 +140,71 @@ export function StatusPill({ active }) {
 }
 
 export function TableStatusRow({ colSpan, children, className = '' }) {
+  const tdRef = useRef(null)
+  const [dimensions, setDimensions] = useState({ width: null, height: null })
+
+  useEffect(() => {
+    const td = tdRef.current
+    if (!td) return
+
+    const container = td.closest('.overflow-auto') || td.closest('div')
+    if (!container) return
+
+    const table = td.closest('table')
+    const thead = table?.querySelector('thead')
+
+    const updateDimensions = () => {
+      const containerWidth = container.clientWidth
+      const containerHeight = container.clientHeight
+      const theadHeight = thead ? thead.offsetHeight : 0
+      const availableHeight = containerHeight > theadHeight ? containerHeight - theadHeight - 2 : 0
+
+      setDimensions((prev) => {
+        const nextWidth = containerWidth > 0 ? containerWidth : null
+        const nextHeight = availableHeight > 160 ? availableHeight : 200
+        if (prev.width === nextWidth && prev.height === nextHeight) return prev
+        return { width: nextWidth, height: nextHeight }
+      })
+    }
+
+    const rafId = requestAnimationFrame(updateDimensions)
+
+    let ro
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(updateDimensions)
+      ro.observe(container)
+      if (thead) ro.observe(thead)
+    }
+
+    window.addEventListener('resize', updateDimensions)
+
+    return () => {
+      cancelAnimationFrame(rafId)
+      if (ro) ro.disconnect()
+      window.removeEventListener('resize', updateDimensions)
+    }
+  }, [])
+
   return (
     <tr>
       <td
+        ref={tdRef}
         colSpan={colSpan}
-        className={`bg-white py-14 text-center text-slate-500 ${className}`}
+        className={`bg-white p-0 text-slate-500 ${className}`}
+        style={{
+          height: dimensions.height ? `${dimensions.height}px` : undefined,
+        }}
       >
-        {children}
+        <div
+          style={{
+            position: 'sticky',
+            left: 0,
+            width: dimensions.width ? `${dimensions.width}px` : '100%',
+          }}
+          className="flex h-full min-h-[160px] w-full flex-col items-center justify-center text-center px-4 py-8 text-slate-500"
+        >
+          {children}
+        </div>
       </td>
     </tr>
   )

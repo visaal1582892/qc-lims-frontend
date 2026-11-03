@@ -20,6 +20,16 @@ const OVERVIEW_NAV_LINKS = [
   { to: '/dashboard', label: 'Dashboard', icon: 'layoutDashboard' },
 ]
 
+const QC_OPERATIONS_NAV_LINKS = [
+  { to: '/payload-inward', label: 'Payload Inward', icon: 'fileText', rights: ['ROLE_QC_REQUEST_CREATE', 'ROLE_QC_REQUEST_READ'] },
+  { to: '/qc-requests', label: 'Pending QC Requests', icon: 'clipboardList', rights: ['ROLE_QC_REQUEST_READ'] },
+  { to: '/qc-request-tracking', label: 'QC Request Tracking', icon: 'search', rights: ['ROLE_QC_REQUEST_TRACKING_READ'] },
+  { to: '/upload-trfs', label: 'Upload TRFs', icon: 'cloudUpload', rights: ['ROLE_TRF_READ', 'ROLE_TRF_UPLOAD'] },
+  { to: '/generate-ar', label: 'Generate AR', icon: 'badgeCheck', rights: ['ROLE_AR_GENERATE_READ', 'ROLE_AR_GENERATE_CREATE'] },
+  { to: '/assigned-tests', label: 'Assigned Tests', icon: 'flaskConical', rights: ['ROLE_ASSIGNED_TESTS_READ', 'ROLE_TEST_EXECUTE', 'ROLE_TEST_REVIEW'] },
+  { to: '/incidents', label: 'Incidents', icon: 'alertTriangle', rights: ['ROLE_INCIDENTS_READ', 'ROLE_INCIDENTS_RESOLVE'] },
+]
+
 const ADMIN_NAV_LINKS = [
   { to: '/masters', label: 'Masters', icon: 'cog', rights: ['ROLE_MASTER_DATA_READ', 'ROLE_MASTER_DATA_CREATE', 'ROLE_MASTER_DATA_UPDATE', 'ROLE_MASTER_DATA_DELETE', 'ROLE_METRIC_READ', 'ROLE_TEST_PARAMETER_READ', 'ROLE_QUALIFICATION_READ', 'ROLE_INVENTORY_CONFIG_READ', 'ROLE_METRIC_SPECIFICATION_READ'] },
 ]
@@ -50,6 +60,12 @@ export default function AppLayout() {
 
   // Filter nav links by user rights
   const visibleOverview = useMemo(() => OVERVIEW_NAV_LINKS, [])
+  const visibleOperations = useMemo(() => {
+    return QC_OPERATIONS_NAV_LINKS.filter((item) => {
+      if (!item.rights) return true
+      return hasRight('ROLE_SYSTEM_ADMIN') || item.rights.some((r) => hasRight(r))
+    })
+  }, [hasRight])
   const visibleAdmin = useMemo(() => {
     return ADMIN_NAV_LINKS.filter((item) => {
       if (!item.rights) return true
@@ -61,6 +77,14 @@ export default function AppLayout() {
   const navHeader = useMemo(() => {
     if (location.pathname === '/masters') return 'Master Hub'
     if (location.pathname === '/dashboard') return 'Dashboard'
+    if (location.pathname === '/payload-inward') return 'Payload Inward'
+    if (location.pathname === '/qc-requests') return 'Pending QC Requests'
+    if (location.pathname === '/qc-request-tracking') return 'QC Request Tracking'
+    if (location.pathname === '/upload-trfs') return 'Upload TRFs'
+    if (location.pathname === '/generate-ar') return 'Generate AR Number'
+    if (location.pathname === '/assigned-tests') return 'Assigned Tests'
+    if (location.pathname.startsWith('/assigned-tests/')) return 'Test Execution'
+    if (location.pathname === '/incidents') return 'QC Incidents'
     if (location.pathname.startsWith('/masters/')) return 'Master Data'
     return 'QC LIMS'
   }, [location.pathname])
@@ -102,7 +126,7 @@ export default function AppLayout() {
         {/* Nav */}
         <nav className={`flex-1 overflow-hidden overflow-y-auto py-2.5 ${collapsed ? 'px-2 space-y-2' : 'px-2.5 space-y-3'}`}>
           <div className="space-y-0.5">
-            {[...visibleOverview, ...visibleAdmin].map(item => (
+            {[...visibleOverview, ...visibleOperations, ...visibleAdmin].map(item => (
               <SidebarLink
                 key={item.to}
                 to={item.to}
