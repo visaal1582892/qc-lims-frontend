@@ -15,6 +15,7 @@ import UploadTrfPage from './pages/UploadTrfPage'
 import GenerateArPage from './pages/GenerateArPage'
 import AssignedTestsPage from './pages/AssignedTestsPage'
 import SubmitTestExecutionPage from './pages/SubmitTestExecutionPage'
+import ViewTestExecutionPage from './pages/ViewTestExecutionPage'
 import IncidentsPage from './pages/IncidentsPage'
 import ProtectedRoute from './auth/ProtectedRoute'
 import AppLayout from './layouts/AppLayout'
@@ -85,6 +86,14 @@ function App() {
               element={
                 <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_TEST_EXECUTE]}>
                   <SubmitTestExecutionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="assigned-tests/:detailId/view"
+              element={
+                <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_ASSIGNED_TESTS_READ, Rights.ROLE_TEST_EXECUTE, Rights.ROLE_TEST_REVIEW]}>
+                  <ViewTestExecutionPage />
                 </ProtectedRoute>
               }
             />

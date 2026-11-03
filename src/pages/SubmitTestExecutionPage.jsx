@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { assignedTestsApi } from '../api/assignedTests'
-import { qcRequestsApi } from '../api/qcRequests'
 import Icon from '../components/Icon'
 import TestHistoryModal from '../components/TestHistoryModal'
+import TestFileUpload from '../components/TestFileUpload'
 import ActionReasonModal from '../components/ActionReasonModal'
 import { useToast } from '../components/Toast'
 
@@ -18,8 +18,11 @@ export default function SubmitTestExecutionPage() {
   
   // History modal state
   const [historyOpen, setHistoryOpen] = useState(false)
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [testHistory, setTestHistory] = useState(null)
+  
+  // File upload state (Guardrail 3: uploaded to image server immediately, saved on final submit)
+  const [uploadedFiles, setUploadedFiles] = useState([]) // { url, originalName, remarks }
+  const [previousAttemptFiles, setPreviousAttemptFiles] = useState([])
+  const [selectedPreviousFileIds, setSelectedPreviousFileIds] = useState([])
 
   // Submission notes modal state
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
@@ -53,17 +56,26 @@ export default function SubmitTestExecutionPage() {
     }
   }, [detailId, toast])
 
+  // Load previous attempt files when testDetails is available
+  useEffect(() => {
+    if (testDetails?.execId) {
+      loadPreviousAttemptFiles()
+    }
+  }, [testDetails?.execId])
+
   // Open Test History Modal
-  const handleOpenHistory = async () => {
+  const handleOpenHistory = () => {
     setHistoryOpen(true)
+  }
+
+  // Load previous attempt files
+  const loadPreviousAttemptFiles = async () => {
+    if (!testDetails?.execId) return
     try {
-      setHistoryLoading(true)
-      const res = await assignedTestsApi.getTestHistory(detailId)
-      setTestHistory(res.data)
-    } catch (err) {
-      toast.error(err.response?.data?.message || err.message || 'Failed to load test history')
-    } finally {
-      setHistoryLoading(false)
+      const res = await assignedTestsApi.getPreviousAttemptFiles(detailId, testDetails.execId)
+      setPreviousAttemptFiles(res.data || [])
+    } catch {
+      // No previous files
     }
   }
 
@@ -147,6 +159,12 @@ export default function SubmitTestExecutionPage() {
         manualIncident: isManualIncident,
         submissionNotes,
         values: payloadValues,
+        files: uploadedFiles.map(f => ({
+          url: f.url,
+          originalName: f.originalName,
+          remarks: f.remarks || null,
+        })),
+        linkedPreviousFileIds: selectedPreviousFileIds,
       }
 
       await assignedTestsApi.submitTestResults(detailId, payload)
@@ -401,6 +419,18 @@ export default function SubmitTestExecutionPage() {
           </div>
         )}
 
+        {/* File Upload Section */}
+        <div className="mt-6">
+          <TestFileUpload
+            detailId={detailId}
+            onFilesChange={setUploadedFiles}
+            previousAttemptFiles={previousAttemptFiles}
+            selectedPreviousFileIds={selectedPreviousFileIds}
+            onPreviousSelectionChange={setSelectedPreviousFileIds}
+            loading={loading}
+          />
+        </div>
+
         {/* Dual Submit Action Buttons */}
         <div className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-5">
           <button
@@ -451,8 +481,7 @@ export default function SubmitTestExecutionPage() {
       <TestHistoryModal
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
-        history={testHistory}
-        loading={historyLoading}
+        detailId={detailId}
       />
 
       {/* Submission Notes Modal */}

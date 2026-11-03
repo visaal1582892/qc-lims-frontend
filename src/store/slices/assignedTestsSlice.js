@@ -19,7 +19,7 @@ export const fetchAssignedTests = createAsyncThunk(
         paramName: filters.paramName || undefined,
         batchId: filters.batchId || undefined,
         batch: filters.batch || undefined,
-        userId: filters.userId || undefined,
+        assignedTo: filters.assignedTo || undefined,
       }
 
       const res = await assignedTestsApi.getAssignedTests(params)
@@ -121,6 +121,19 @@ export const reworkTestThunk = createAsyncThunk(
   }
 )
 
+export const transferTestThunk = createAsyncThunk(
+  'assignedTests/transferTest',
+  async ({ detailId, targetUserId, reason }, { dispatch, rejectWithValue }) => {
+    try {
+      const res = await assignedTestsApi.transferTest(detailId, { targetUserId, reason })
+      dispatch(fetchAssignedTests())
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message)
+    }
+  }
+)
+
 const initialFilters = {
   arNumber: '',
   productId: '',
@@ -128,7 +141,7 @@ const initialFilters = {
   paramName: '',
   batchId: '',
   batch: '',
-  userId: '',
+  assignedTo: '',
   status: 'all',
 }
 

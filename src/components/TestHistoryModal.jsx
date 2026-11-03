@@ -1,12 +1,39 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { assignedTestsApi } from '../api/assignedTests'
 import Icon from './Icon'
+import { useToast } from './Toast'
 
-export default function TestHistoryModal({
-  isOpen,
-  onClose,
-  history,
-  loading = false,
-}) {
-  if (!isOpen) return null
+export default function TestHistoryModal({ isOpen, onClose, detailId }) {
+  const navigate = useNavigate()
+  const toast = useToast()
+
+  const [history, setHistory] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (isOpen && detailId) {
+      loadHistory()
+    }
+  }, [isOpen, detailId])
+
+  const loadHistory = async () => {
+    setLoading(true)
+    try {
+      const res = await assignedTestsApi.getTestHistory(detailId)
+      setHistory(res.data)
+    } catch {
+      toast.error('Failed to load test history')
+      setHistory(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleViewAttempt = (attemptDetailId) => {
+    onClose()
+    navigate(`/assigned-tests/${attemptDetailId}/view`)
+  }
 
   const getStatusBadge = (status) => {
     const map = {
@@ -19,6 +46,7 @@ export default function TestHistoryModal({
       INVALID: 'bg-rose-50 text-rose-700 ring-rose-600/20',
       APPROVED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
       REJECTED: 'bg-rose-100 text-rose-800 ring-rose-700/30',
+      TRANSFERRED: 'bg-violet-50 text-violet-700 ring-violet-600/20',
     }
     const color = map[status] || 'bg-slate-50 text-slate-700 ring-slate-600/20'
     return (
@@ -41,6 +69,7 @@ export default function TestHistoryModal({
       REJECT: 'bg-rose-100 text-rose-800',
       REWORK: 'bg-amber-100 text-amber-800',
       RETEST: 'bg-rose-100 text-rose-800',
+      TRANSFER: 'bg-violet-100 text-violet-800',
     }
     const color = map[op] || 'bg-slate-100 text-slate-800'
     return (
@@ -50,13 +79,15 @@ export default function TestHistoryModal({
     )
   }
 
+  if (!isOpen) return null
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-200/80">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-200/80">
               <Icon name="clock" className="h-4 w-4" />
             </span>
             <div>
@@ -64,13 +95,13 @@ export default function TestHistoryModal({
                 Test Execution History {history?.parameterName ? `— ${history.parameterName}` : ''}
               </h3>
               <p className="text-xs text-slate-500">
-                All prior testing attempts and logged operational lifecycle events
+                Testing attempts and operational lifecycle events
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
           >
             <Icon name="x" className="h-5 w-5" />
           </button>
@@ -80,7 +111,7 @@ export default function TestHistoryModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {loading ? (
             <div className="flex h-40 items-center justify-center gap-2 text-slate-500">
-              <Icon name="refreshCw" className="h-5 w-5 animate-spin" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
               <span className="text-sm">Loading test history...</span>
             </div>
           ) : !history?.attempts || history.attempts.length === 0 ? (
@@ -97,9 +128,15 @@ export default function TestHistoryModal({
                 {/* Attempt Header */}
                 <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 px-4 py-3 border-b border-slate-100">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center rounded-md bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-xs">
-                      Attempt #{attempt.attemptNumber}
-                    </span>
+                    {/* Clickable attempt number — navigates to View Test */}
+                    <button
+                      type="button"
+                      onClick={() => handleViewAttempt(attempt.detailId)}
+                      className="inline-flex items-center rounded-md bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-brand-700 active:scale-95 transition-all cursor-pointer"
+                      title="Click to view this attempt"
+                    >
+                      Attempt {attempt.attemptNumber}
+                    </button>
                     {getStatusBadge(attempt.status)}
                     {attempt.incidentId && (
                       <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
@@ -110,7 +147,7 @@ export default function TestHistoryModal({
                   </div>
                   <div className="flex items-center gap-4 text-xs text-slate-500">
                     <span>
-                      Analyst: <strong className="text-slate-700">{attempt.userId}</strong>
+                      Analyst: <strong className="text-slate-700">{attempt.userFullName || attempt.userId}</strong>
                     </span>
                     {attempt.createdAt && (
                       <span>{new Date(attempt.createdAt).toLocaleString()}</span>
@@ -190,7 +227,7 @@ export default function TestHistoryModal({
         <div className="border-t border-slate-100 px-6 py-3 flex justify-end bg-slate-50/50 rounded-b-2xl">
           <button
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
           >
             Close
           </button>

@@ -26,6 +26,8 @@ import MasterPageLayout, {
   MasterFilterRow,
 } from '../components/MasterPageLayout'
 import ActionReasonModal from '../components/ActionReasonModal'
+import TransferModal from '../components/TransferModal'
+import TestHistoryModal from '../components/TestHistoryModal'
 import useDebounce from '../hooks/useDebounce'
 import useAuth from '../auth/useAuth'
 import { Rights } from '../constants/rights'
@@ -39,6 +41,7 @@ export default function AssignedTestsPage() {
 
   const canExecute = hasRight(Rights.ROLE_SYSTEM_ADMIN) || hasRight(Rights.ROLE_TEST_EXECUTE)
   const canReview = hasRight(Rights.ROLE_SYSTEM_ADMIN) || hasRight(Rights.ROLE_TEST_REVIEW)
+  const canTransfer = canReview || hasRight(Rights.ROLE_TEST_TRANSFER)
   const canDownloadTrf =
     hasRight(Rights.ROLE_SYSTEM_ADMIN) ||
     hasRight(Rights.ROLE_TRF_DOWNLOAD) ||
@@ -62,11 +65,11 @@ export default function AssignedTestsPage() {
   const dProductName = useDebounce(filters.productName, 350)
   const dParamName = useDebounce(filters.paramName, 350)
   const dBatchId = useDebounce(filters.batchId, 350)
-  const dUserId = useDebounce(filters.userId, 350)
+  const dAssignedTo = useDebounce(filters.assignedTo, 350)
 
   useEffect(() => {
     dispatch(fetchAssignedTests())
-  }, [dispatch, page, dArNumber, dProductId, dProductName, dParamName, dBatchId, dUserId, filters.status])
+  }, [dispatch, page, dArNumber, dProductId, dProductName, dParamName, dBatchId, dAssignedTo, filters.status])
 
   const hasActiveFilters = Boolean(
     filters.arNumber ||
@@ -74,7 +77,7 @@ export default function AssignedTestsPage() {
     filters.productName ||
     filters.paramName ||
     filters.batchId ||
-    filters.userId ||
+    filters.assignedTo ||
     (filters.status && filters.status !== 'all')
   )
 
@@ -95,6 +98,14 @@ export default function AssignedTestsPage() {
     confirmColor: 'brand',
     icon: 'edit',
   })
+
+  // Transfer modal state
+  const [transferModalOpen, setTransferModalOpen] = useState(false)
+  const [transferDetail, setTransferDetail] = useState(null)
+
+  // History modal state
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [historyDetailId, setHistoryDetailId] = useState(null)
 
   // 3-dot dropdown menu open row
   const [activeMenuId, setActiveMenuId] = useState(null)
@@ -222,6 +233,32 @@ export default function AssignedTestsPage() {
     }
   }
 
+  // Transfer handler
+  const openTransferModal = (item) => {
+    setActiveMenuId(null)
+    setTransferDetail(item)
+    setTransferModalOpen(true)
+  }
+
+  const handleTransferSuccess = () => {
+    setTransferModalOpen(false)
+    setTransferDetail(null)
+    dispatch(fetchAssignedTests())
+  }
+
+  // History modal handler
+  const openHistoryModal = (detailId) => {
+    setActiveMenuId(null)
+    setHistoryDetailId(detailId)
+    setHistoryModalOpen(true)
+  }
+
+  // View Test handler — for terminal states
+  const handleViewTest = (detailId) => {
+    setActiveMenuId(null)
+    navigate(`/assigned-tests/${detailId}/view`)
+  }
+
   // TRF Download Handler
   const handleDownloadTrf = async (trfUrl, fileName) => {
     try {
@@ -250,6 +287,7 @@ export default function AssignedTestsPage() {
       INVALID: 'bg-rose-50 text-rose-700 ring-rose-600/20',
       APPROVED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
       REJECTED: 'bg-rose-100 text-rose-800 ring-rose-700/30',
+      TRANSFERRED: 'bg-violet-50 text-violet-700 ring-violet-600/20',
     }
     const color = map[status] || 'bg-slate-50 text-slate-700 ring-slate-600/20'
     return (
@@ -323,9 +361,9 @@ export default function AssignedTestsPage() {
                 </th>
                 <th className="px-2.5 py-1.5">
                   <FilterInput
-                    value={filters.userId}
-                    onChange={(val) => dispatch(setFilter({ key: 'userId', value: val }))}
-                    placeholder="Filter User..."
+                    value={filters.assignedTo}
+                    onChange={(val) => dispatch(setFilter({ key: 'assignedTo', value: val }))}
+                    placeholder="Filter Assigned To..."
                   />
                 </th>
                 <th className="px-2.5 py-1.5 text-center text-[11px] font-normal text-slate-400">—</th>
@@ -346,6 +384,7 @@ export default function AssignedTestsPage() {
                       { value: 'CANCELLED', label: 'CANCELLED' },
                       { value: 'OUTSOURCED', label: 'OUTSOURCED' },
                       { value: 'REJECTED', label: 'REJECTED' },
+                      { value: 'TRANSFERRED', label: 'TRANSFERRED' },
                     ]}
                   />
                 </th>
@@ -369,7 +408,7 @@ export default function AssignedTestsPage() {
                   const isTesting = item.status === 'TESTING'
                   const isHold = item.status === 'HOLD'
                   const isSubmitted = item.status === 'SUBMITTED'
-                  const isTerminal = ['CANCELLED', 'OUTSOURCED', 'INVALID', 'APPROVED', 'REJECTED'].includes(item.status)
+                  const isTerminal = ['CANCELLED', 'OUTSOURCED', 'INVALID', 'APPROVED', 'REJECTED', 'TRANSFERRED'].includes(item.status)
 
                   return (
                     <tr key={item.detailId} className={`group hover:bg-slate-50/80 transition-colors ${isMenuOpen ? 'relative z-50' : ''}`}>
@@ -388,8 +427,10 @@ export default function AssignedTestsPage() {
                       <td className="px-2.5 py-2 font-mono text-slate-600">
                         {item.batchId != null ? item.batchId : '-'}
                       </td>
-                      <td className="px-2.5 py-2 font-mono font-medium text-slate-800">
-                        {item.userId || '-'}
+                      <td className="px-2.5 py-2">
+                        <span className="text-slate-800 font-medium" title={item.userId}>
+                          {item.userFullName || item.userId || '-'}
+                        </span>
                       </td>
                       <td className="px-2.5 py-2 text-center">
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
@@ -429,8 +470,40 @@ export default function AssignedTestsPage() {
                       </td>
                       {/* Actions 3-dot Menu (FIXED) */}
                       <td className={`w-[80px] min-w-[80px] max-w-[80px] sticky right-0 bg-white group-hover:bg-slate-50 ${isMenuOpen ? 'z-50' : 'z-10'} px-2.5 py-2 text-center`}>
+                        {/* Terminal states: View Test + History */}
                         {isTerminal ? (
-                          <span className="text-slate-400">—</span>
+                          <div className="relative inline-block text-left" ref={isMenuOpen ? menuRef : null}>
+                            <button
+                              type="button"
+                              onClick={() => setActiveMenuId(isMenuOpen ? null : item.detailId)}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                            >
+                              <Icon name="moreVertical" className="h-4 w-4" />
+                            </button>
+
+                            {isMenuOpen && (
+                              <div className="absolute right-0 z-50 mt-1 w-44 origin-top-right rounded-xl bg-white shadow-xl ring-1 ring-slate-900/10 py-1 text-xs divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="py-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleViewTest(item.detailId)}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-slate-700 hover:bg-slate-50"
+                                  >
+                                    <Icon name="eye" className="h-3.5 w-3.5 text-slate-500" />
+                                    View Test
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openHistoryModal(item.detailId)}
+                                    className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-blue-700 hover:bg-blue-50"
+                                  >
+                                    <Icon name="clock" className="h-3.5 w-3.5 text-blue-600" />
+                                    History
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <div className="relative inline-block text-left" ref={isMenuOpen ? menuRef : null}>
                             <button
@@ -453,6 +526,20 @@ export default function AssignedTestsPage() {
                                     >
                                       <Icon name="play" className="h-3.5 w-3.5 text-brand-600" />
                                       Start Test
+                                    </button>
+                                  </div>
+                                )}
+
+                                {/* ASSIGNED: Transfer (Reviewer) */}
+                                {isAssigned && canTransfer && (
+                                  <div className="py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => openTransferModal(item)}
+                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-violet-700 hover:bg-violet-50"
+                                    >
+                                      <Icon name="arrowRightLeft" className="h-3.5 w-3.5 text-violet-600" />
+                                      Transfer
                                     </button>
                                   </div>
                                 )}
@@ -579,6 +666,21 @@ export default function AssignedTestsPage() {
         icon={modalConfig.icon}
         loading={actionLoading}
         required={true}
+      />
+
+      {/* Transfer Modal */}
+      <TransferModal
+        isOpen={transferModalOpen}
+        onClose={() => { setTransferModalOpen(false); setTransferDetail(null) }}
+        onSuccess={handleTransferSuccess}
+        item={transferDetail}
+      />
+
+      {/* History Modal */}
+      <TestHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => { setHistoryModalOpen(false); setHistoryDetailId(null) }}
+        detailId={historyDetailId}
       />
     </MasterPageLayout>
   )

@@ -33,8 +33,23 @@ export const assignedTestsApi = {
     return api.post(`/v1/assigned-tests/${detailId}/rework`, { reason })
   },
 
+  // Transfer
+  transferTest: (detailId, payload) => {
+    return api.post(`/v1/assigned-tests/${detailId}/transfer`, payload)
+  },
+
+  getEligibleUsers: (paramId, excludeUserId) => {
+    const params = { paramId }
+    if (excludeUserId) params.excludeUserId = excludeUserId
+    return api.get('/v1/assigned-tests/eligible-users', { params })
+  },
+
   getSubmissionDetails: (detailId) => {
     return api.get(`/v1/assigned-tests/${detailId}/submission-details`)
+  },
+
+  getViewTestDetail: (detailId) => {
+    return api.get(`/v1/assigned-tests/view/${detailId}`)
   },
 
   getTestHistory: (detailId) => {
@@ -43,5 +58,24 @@ export const assignedTestsApi = {
 
   submitTestResults: (detailId, payload) => {
     return api.post(`/v1/assigned-tests/${detailId}/submit`, payload)
+  },
+
+  // Files
+  getFilesForDetail: (detailId) => {
+    return api.get(`/v1/assigned-tests/${detailId}/files`)
+  },
+
+  getPreviousAttemptFiles: (detailId, execId) => {
+    return api.get(`/v1/assigned-tests/${detailId}/previous-attempt-files`, {
+      params: { execId },
+    })
+  },
+
+  uploadFile: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/v1/assigned-tests/upload-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
   },
 }
