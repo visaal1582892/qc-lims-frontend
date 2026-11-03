@@ -91,11 +91,18 @@ export default function GrnDetailsModal({ grnId, isOpen, onClose }) {
           ) : data ? (
             <>
               {/* Header Overview Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 text-xs">
                 <div>
                   <span className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider block">GRN Receipt ID</span>
                   <span className="mt-1 font-mono font-semibold text-slate-900 block truncate">
                     {data.proformaStoreReceiptId || grnId}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider block">Store ID</span>
+                  <span className="mt-1 font-mono font-semibold text-slate-900 block truncate">
+                    {data.storeId || '-'}
                   </span>
                 </div>
 
