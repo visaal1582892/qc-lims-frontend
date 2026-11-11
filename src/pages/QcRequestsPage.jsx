@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import GrnDetailsModal from '../components/GrnDetailsModal'
+import ProductIdLink from '../components/ProductIdLink'
 import {
   fetchQcRequests,
   validateAcceptanceThunk,
@@ -240,11 +241,17 @@ export default function QcRequestsPage() {
 
       {/* Table Container */}
       <MasterPageLayout>
-        <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="Pending QC testing requests table"
+          className="hidden flex-1 min-h-0 overflow-auto sm:block"
+        >
           <table className="w-full min-w-full text-xs">
+            <caption className="sr-only">Pending QC testing requests</caption>
             <MasterTableHeader>
               <MasterHeaderRow>
-                <th className="w-10 px-2 py-2.5 text-center">
+                <th scope="col" className="w-10 px-2 py-2.5 text-center">
                   <input
                     type="checkbox"
                     checked={isAllSelected}
@@ -253,28 +260,33 @@ export default function QcRequestsPage() {
                     aria-label="Select all on page"
                   />
                 </th>
-                <th className="w-16 px-2.5 py-2.5">Req ID</th>
-                <th className="w-35 px-2.5 py-2.5">GRN ID</th>
-                <th className="w-35 px-2.5 py-2.5">Store ID</th>
-                <th className="w-35 px-2.5 py-2.5">Product ID</th>
-                <th className="w-35 px-2.5 py-2.5">Batch ID</th>
-                <th className="w-35 px-2.5 py-2.5 text-center">Status</th>
+                <th scope="col" className="w-16 px-2.5 py-2.5">Req ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">GRN ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Store ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Product ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Batch ID</th>
+                <th scope="col" className="w-28 px-2.5 py-2.5 text-right">Qty Needed</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5 text-center">Status</th>
               </MasterHeaderRow>
 
               <MasterFilterRow>
                 <th className="px-2 py-1.5 text-center">
                   {selectedIds.length > 0 ? (
                     <button
+                      type="button"
                       onClick={() => dispatch(clearSelection())}
                       title="Clear selection"
+                      aria-label="Clear selection"
                       className="text-slate-400 hover:text-slate-600"
                     >
                       <Icon name="x" className="h-3 w-3 mx-auto" />
                     </button>
                   ) : hasActiveFilters ? (
                     <button
+                      type="button"
                       onClick={handleClearFilters}
                       title="Clear all filters"
+                      aria-label="Clear all filters"
                       className="text-slate-400 hover:text-indigo-600 transition"
                     >
                       <Icon name="rotateCcw" className="h-3 w-3 mx-auto" />
@@ -317,14 +329,15 @@ export default function QcRequestsPage() {
                   />
                 </th>
                 <th className="px-1.5 py-1.5" />
+                <th className="px-1.5 py-1.5" />
               </MasterFilterRow>
             </MasterTableHeader>
 
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <TableStatusRow colSpan={7}>Loading QC testing requests…</TableStatusRow>
+                <TableStatusRow colSpan={8}>Loading QC testing requests…</TableStatusRow>
               ) : items.length === 0 ? (
-                <TableStatusRow colSpan={7}>No matching requests found.</TableStatusRow>
+                <TableStatusRow colSpan={8}>No matching requests found.</TableStatusRow>
               ) : (
                 items.map(item => {
                   const isSelected = selectedIds.includes(item.requestId)
@@ -339,6 +352,7 @@ export default function QcRequestsPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => dispatch(toggleSelectRow(item.requestId))}
+                          aria-label={`Select request ${item.requestId}`}
                           className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 cursor-pointer"
                         />
                       </td>
@@ -362,11 +376,16 @@ export default function QcRequestsPage() {
                       <td className="px-2.5 py-2 font-mono text-[11px] text-slate-700">
                         {item.fromStoreId || '-'}
                       </td>
-                      <td className="px-2.5 py-2 font-mono font-medium text-slate-900">
-                        {item.productId}
+                      <td className="px-2.5 py-2 font-mono text-[11px]">
+                        <ProductIdLink productId={item.productId} />
                       </td>
                       <td className="px-2.5 py-2 font-mono text-[11px] text-slate-600">
                         {item.batchId}
+                      </td>
+                      <td className="px-2.5 py-2 text-right font-mono text-[11px] font-semibold text-slate-800">
+                        {item.quantityNeededForTesting != null
+                          ? Number(item.quantityNeededForTesting).toLocaleString()
+                          : <span className="text-slate-400 font-normal">—</span>}
                       </td>
                       <td className="px-2.5 py-2 text-center">
                         <StatusBadge status={item.status} />
@@ -445,7 +464,9 @@ export default function QcRequestsPage() {
                     <tbody className="divide-y divide-slate-200/70 bg-white">
                       {validationData.summaryItems?.map((p, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/80">
-                          <td className="px-3 py-2 font-mono font-medium text-slate-800">{p.productId}</td>
+                          <td className="px-3 py-2 font-mono text-[11px]">
+                            <ProductIdLink productId={p.productId} />
+                          </td>
                           <td className="px-3 py-2 font-mono text-slate-600">{p.batchId}</td>
                           <td className="px-3 py-2 text-right font-bold text-slate-900">{p.quantity}</td>
                         </tr>
@@ -454,7 +475,7 @@ export default function QcRequestsPage() {
                   </table>
                 </div>
                 <p className="mt-1 text-[11px] text-slate-500 italic">
-                  * Counts are derived from active QC Inventory Configuration (sum of count_needed).
+                  * Counts use the Quantity Needed stored on each request at creation (or active QC Inventory Configuration if stored quantity is unavailable).
                 </p>
               </div>
 

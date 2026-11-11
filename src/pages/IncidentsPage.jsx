@@ -19,6 +19,7 @@ import MasterPageLayout, {
   MasterFilterRow,
 } from '../components/MasterPageLayout'
 import ActionReasonModal from '../components/ActionReasonModal'
+import ProductIdLink from '../components/ProductIdLink'
 import useDebounce from '../hooks/useDebounce'
 import useAuth from '../auth/useAuth'
 import { Rights } from '../constants/rights'
@@ -63,7 +64,7 @@ export default function IncidentsPage() {
     filters.paramName ||
     filters.batchId ||
     filters.analystId ||
-    (filters.status && filters.status !== 'all')
+    (filters.status && filters.status !== 'P')
   )
 
   const handleClearFilters = () => {
@@ -126,7 +127,7 @@ export default function IncidentsPage() {
         placeholder: 'Detailed justification for rejecting the sample...',
         confirmText: 'Reject Sample',
         confirmColor: 'rose',
-        icon: 'slash',
+        icon: 'ban',
       })
     }
   }
@@ -165,20 +166,53 @@ export default function IncidentsPage() {
   }
 
   return (
-    <MasterPageLayout
-      title="Incidents"
-      description="Quality control incident investigation, out-of-specification review, and retest approvals"
-      totalCount={total}
-      hasActiveFilters={hasActiveFilters}
-      onClearFilters={handleClearFilters}
-    >
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-white shadow-xs ring-1 ring-slate-200/80 rounded-xl">
-        <div className="flex-1 min-h-0 overflow-auto">
+    <div className="mx-auto flex h-full min-h-0 w-full flex-1 flex-col gap-3">
+      {/* Page Header */}
+      <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+            <Icon name="alertTriangle" className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-slate-900">QC Incidents</h1>
+            <p className="text-xs text-slate-500">
+              {total} incident{total === 1 ? '' : 's'} total • Quality control incident investigation and retest approvals
+            </p>
+          </div>
+        </div>
+
+        {/* Global Toolbar buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            disabled={!hasActiveFilters}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-xs transition hover:bg-slate-50 disabled:opacity-40"
+            title="Clear all filters"
+          >
+            <Icon name="rotateCcw" className="h-3.5 w-3.5" />
+            Clear Filters
+          </button>
+
+          <button
+            type="button"
+            onClick={() => dispatch(fetchIncidents())}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]"
+            title="Refresh list"
+          >
+            <Icon name="refreshCw" className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      {/* Table Container */}
+      <MasterPageLayout>
+        <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
           <table className="w-full min-w-max border-separate border-spacing-0 text-left text-xs text-slate-600">
             <MasterTableHeader>
               <MasterHeaderRow>
-                <th className="w-12 px-2.5 py-2.5 font-semibold text-slate-700 text-center">#</th>
-                <th className="w-[110px] min-w-[90px] px-2.5 py-2.5 font-semibold text-slate-700">Incident ID</th>
+                <th className="w-[100px] min-w-[85px] px-2.5 py-2.5 font-semibold text-slate-700">Inc ID</th>
                 <th className="w-[110px] min-w-[100px] px-2.5 py-2.5 font-semibold text-slate-700">AR Number</th>
                 <th className="w-[110px] min-w-[85px] px-2.5 py-2.5 font-semibold text-slate-700">Product ID</th>
                 <th className="min-w-[140px] px-2.5 py-2.5 font-semibold text-slate-700">Parameter</th>
@@ -197,7 +231,6 @@ export default function IncidentsPage() {
               </MasterHeaderRow>
 
               <MasterFilterRow>
-                <th className="px-2.5 py-1.5 text-center text-[11px] font-normal text-slate-400">—</th>
                 <th className="px-2.5 py-1.5">
                   <FilterInput
                     value={filters.incidentId}
@@ -261,31 +294,26 @@ export default function IncidentsPage() {
 
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <TableStatusRow colSpan={11} type="loading" message="Loading incidents..." />
+                <TableStatusRow colSpan={10}>Loading quality incidents…</TableStatusRow>
               ) : items.length === 0 ? (
-                <TableStatusRow
-                  colSpan={11}
-                  type="empty"
-                  message={hasActiveFilters ? 'No incidents match the current filter criteria' : 'No quality incidents found'}
-                />
+                <TableStatusRow colSpan={10}>
+                  {hasActiveFilters ? 'No matching incidents found.' : 'No quality incidents found.'}
+                </TableStatusRow>
               ) : (
-                items.map((item, idx) => {
+                items.map((item) => {
                   const isMenuOpen = activeMenuId === item.incidentId
                   const isPending = item.status === 'PENDING' || item.status === 'P'
 
                   return (
                     <tr key={item.incidentId} className={`group hover:bg-slate-50/80 transition-colors ${isMenuOpen ? 'relative z-50' : ''}`}>
-                      <td className="px-2.5 py-2 text-center text-slate-400">
-                        {page * pageSize + idx + 1}
-                      </td>
                       <td className="px-2.5 py-2 font-mono font-bold text-slate-800">
-                        INC-{item.incidentId}
+                        {item.incidentId}
                       </td>
                       <td className="px-2.5 py-2 font-mono font-semibold text-slate-800">
                         {item.arNumber || '-'}
                       </td>
-                      <td className="px-2.5 py-2 font-mono font-medium text-slate-800">
-                        {item.productId || '-'}
+                      <td className="px-2.5 py-2 font-mono text-[11px]">
+                        <ProductIdLink productId={item.productId} />
                       </td>
                       <td className="px-2.5 py-2 font-medium text-slate-800">
                         {item.parameterName}
@@ -338,7 +366,7 @@ export default function IncidentsPage() {
                                     onClick={() => openResolveModal(item, 'REJECT_SAMPLE')}
                                     className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-rose-600 hover:bg-rose-50"
                                   >
-                                    <Icon name="slash" className="h-3.5 w-3.5 text-rose-500" />
+                                    <Icon name="ban" className="h-3.5 w-3.5 text-rose-500" />
                                     Reject Sample
                                   </button>
                                 </div>
@@ -356,7 +384,7 @@ export default function IncidentsPage() {
         </div>
 
         {/* Footer pagination */}
-        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-1">
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -366,7 +394,7 @@ export default function IncidentsPage() {
             loading={loading}
           />
         </div>
-      </div>
+      </MasterPageLayout>
 
       {/* Action Reason Modal */}
       <ActionReasonModal
@@ -383,6 +411,6 @@ export default function IncidentsPage() {
         loading={actionLoading}
         required={true}
       />
-    </MasterPageLayout>
+    </div>
   )
 }

@@ -1,46 +1,41 @@
 import { useState, useRef } from 'react'
-import { assignedTestsApi } from '../api/assignedTests'
+import { useDispatch, useSelector } from 'react-redux'
+import {
+  uploadEvidenceFileThunk,
+  updateFileRemarks,
+  removeUploadedFile,
+  togglePreviousFileId,
+} from '../store/slices/testExecutionSlice'
 import Icon from './Icon'
 import { useToast } from './Toast'
 
 /**
  * TestFileUpload — handles file uploads for test execution with:
  * - Drag & drop + click-to-browse
- * - Immediate upload to image server (url returned, held in frontend state)
+ * - Immediate upload to image server via uploadEvidenceFileThunk
  * - Remarks for each file
  * - Deep copy from previous attempts (selected file IDs)
  * - 25MB limit, PDF/JPEG/PNG only
+ * - Redux Toolkit integration with testExecutionSlice
  */
-export default function TestFileUpload({
-  detailId,
-  onFilesChange,
-  previousAttemptFiles,
-  selectedPreviousFileIds,
-  onPreviousSelectionChange,
-  loading,
-}) {
+export default function TestFileUpload({ detailId }) {
+  const dispatch = useDispatch()
   const toast = useToast()
   const inputRef = useRef(null)
-
-  const [files, setFiles] = useState([])
-  const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+
+  const {
+    uploadedFiles: files,
+    previousAttemptFiles,
+    selectedPreviousFileIds,
+    uploadingFile: uploading,
+    loading,
+  } = useSelector((state) => state.testExecution.submission)
 
   // 25MB limit
   const MAX_SIZE = 25 * 1024 * 1024
   const ACCEPTED = ['image/jpeg', 'image/png', 'application/pdf']
   const ACCEPTED_EXTS = ['.jpg', '.jpeg', '.png', '.pdf']
-
-  // Notify parent whenever files change
-  useState(() => {
-    if (onFilesChange) onFilesChange([])
-  })
-
-  const updateFiles = (updater) => {
-    const newFiles = typeof updater === 'function' ? updater(files) : updater
-    setFiles(newFiles)
-    if (onFilesChange) onFilesChange(newFiles)
-  }
 
   const handleFileInput = async (fileList) => {
     const validFiles = Array.from(fileList).filter((f) => {
@@ -56,31 +51,14 @@ export default function TestFileUpload({
     })
 
     if (validFiles.length === 0) return
-    await uploadFiles(validFiles)
-  }
-
-  const uploadFiles = async (validFiles) => {
-    setUploading(true)
-    const newEntries = []
 
     for (const file of validFiles) {
       try {
-        const result = await assignedTestsApi.uploadFile(file)
-        const url = result.data?.url || result.url || ''
-        newEntries.push({
-          url,
-          originalName: file.name,
-          remarks: '',
-        })
+        await dispatch(uploadEvidenceFileThunk(file)).unwrap()
       } catch (err) {
-        toast.error(`Failed to upload: ${file.name}`)
+        toast.error(err || `Failed to upload: ${file.name}`)
       }
     }
-
-    if (newEntries.length > 0) {
-      updateFiles((prev) => [...prev, ...newEntries])
-    }
-    setUploading(false)
   }
 
   const handleDrop = (e) => {
@@ -90,25 +68,19 @@ export default function TestFileUpload({
   }
 
   const updateRemark = (index, value) => {
-    updateFiles((prev) => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], remarks: value }
-      return updated
-    })
+    dispatch(updateFileRemarks({ index, remarks: value }))
   }
 
   const removeFile = (index) => {
-    updateFiles((prev) => prev.filter((_, i) => i !== index))
+    dispatch(removeUploadedFile(index))
   }
 
   const togglePreviousFile = (fileId) => {
-    onPreviousSelectionChange((prev) =>
-      prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]
-    )
+    dispatch(togglePreviousFileId(fileId))
   }
 
   const getFileIcon = (name) => {
-    if (name.toLowerCase().endsWith('.pdf')) return 'fileText'
+    if (name?.toLowerCase().endsWith('.pdf')) return 'fileText'
     return 'image'
   }
 

@@ -78,4 +78,11 @@ export const assignedTestsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+
+  downloadProxyFile: (fileUrl, filename) => {
+    return api.get('/v1/qc-requests/proxy-download', {
+      params: { url: fileUrl, filename },
+      responseType: 'blob',
+    })
+  },
 }

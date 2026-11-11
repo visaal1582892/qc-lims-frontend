@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import { mastersApi } from '../api/masters'
 import { Rights } from '../constants/rights'
 import BulkUploadModal from '../components/masters/BulkUploadModal'
+import ProductIdLink from '../components/ProductIdLink'
 import Icon from '../components/Icon'
 import Pagination from '../components/Pagination'
 import BackToMaster from '../components/admin/BackToMaster'
@@ -227,7 +228,11 @@ export default function InventoryConfigPage() {
               <div key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-xs text-slate-500">{item.productId}</span>
+                    <ProductIdLink
+                      productId={item.productId}
+                      className="text-xs"
+                      inactive={!isItemActive(item)}
+                    />
                     <span className={`font-medium text-slate-800 ${!isItemActive(item) ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</span>
                     <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-mono text-slate-600">{item.testMethodId}</span>
                   </div>
@@ -279,7 +284,9 @@ function InventoryRow({ item }) {
   return (
     <tr className={`transition hover:bg-slate-50/60 ${!active ? 'bg-slate-50/50 opacity-75' : ''}`}>
       <td className="px-3 py-2.5 font-mono text-xs text-slate-600">{item.id}</td>
-      <td className={`px-3 py-2.5 font-medium text-slate-800 ${!active ? 'line-through text-slate-400' : ''}`}>{item.productId}</td>
+      <td className="px-3 py-2.5">
+        <ProductIdLink productId={item.productId} inactive={!active} />
+      </td>
       <td className={`px-3 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>{item.testParameter?.name || '-'}</td>
       <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{item.testMethodId || '-'}</td>
       <td className="px-3 py-2.5 text-center">

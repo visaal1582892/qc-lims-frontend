@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
+import ProductIdLink from './ProductIdLink'
 import { qcRequestsApi } from '../api/qcRequests'
 
 const STATUS_MAP = {
@@ -192,8 +193,8 @@ export default function TransferOrderDetailsModal({ toId, isOpen, onClose }) {
                               <td className="px-3 py-2 font-mono text-[11px] text-slate-600">
                                 {item.batchId || '-'}
                               </td>
-                              <td className="px-3 py-2 font-mono font-medium text-slate-900">
-                                {item.productId || '-'}
+                              <td className="px-3 py-2 font-mono">
+                                <ProductIdLink productId={item.productId} />
                               </td>
                               <td className="px-3 py-2 max-w-[200px] truncate text-slate-800" title={item.productName}>
                                 {item.productName || '-'}

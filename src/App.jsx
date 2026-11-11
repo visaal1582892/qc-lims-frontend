@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ToastProvider } from './components/Toast'
+import { ProductDetailsProvider } from './context/ProductDetailsContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import MasterHubPage from './pages/MasterHubPage'
@@ -11,12 +12,15 @@ import MetricSpecificationsPage from './pages/MetricSpecificationsPage'
 import PayloadInwardPage from './pages/PayloadInwardPage'
 import QcRequestsPage from './pages/QcRequestsPage'
 import QcRequestTrackingPage from './pages/QcRequestTrackingPage'
-import UploadTrfPage from './pages/UploadTrfPage'
+import TrfRequestsPage from './pages/TrfRequestsPage'
 import GenerateArPage from './pages/GenerateArPage'
 import AssignedTestsPage from './pages/AssignedTestsPage'
 import SubmitTestExecutionPage from './pages/SubmitTestExecutionPage'
 import ViewTestExecutionPage from './pages/ViewTestExecutionPage'
 import IncidentsPage from './pages/IncidentsPage'
+import CreateQcRequestsPage from './pages/CreateQcRequestsPage'
+import GrnFailuresPage from './pages/GrnFailuresPage'
+import ETrfPage from './pages/ETrfPage'
 import ProtectedRoute from './auth/ProtectedRoute'
 import AppLayout from './layouts/AppLayout'
 import { Rights } from './constants/rights'
@@ -25,7 +29,8 @@ function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <Routes>
+        <ProductDetailsProvider>
+          <Routes>
           <Route path="/login" element={<LoginPage />} />
 
           <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -38,6 +43,14 @@ function App() {
               element={
                 <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_QC_REQUEST_CREATE, Rights.ROLE_QC_REQUEST_READ]}>
                   <PayloadInwardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="create-qc-requests"
+              element={
+                <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_QC_REQUEST_CREATE, Rights.ROLE_QC_REQUEST_READ]}>
+                  <CreateQcRequestsPage />
                 </ProtectedRoute>
               }
             />
@@ -58,10 +71,46 @@ function App() {
               }
             />
             <Route
-              path="upload-trfs"
+              path="trf-requests"
               element={
-                <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_TRF_READ, Rights.ROLE_TRF_UPLOAD]}>
-                  <UploadTrfPage />
+                <ProtectedRoute
+                  requireAnyRight={[
+                    Rights.ROLE_SYSTEM_ADMIN,
+                    Rights.ROLE_TRF_READ,
+                    Rights.ROLE_TRF_UPLOAD,
+                    Rights.ROLE_E_TRF_WRITE,
+                    Rights.ROLE_TRF_APPROVE,
+                    Rights.ROLE_TRF_REVISE,
+                  ]}
+                >
+                  <TrfRequestsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="upload-trfs" element={<Navigate to="/trf-requests" replace />} />
+            <Route
+              path="e-trf/:requestId"
+              element={
+                <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_E_TRF_WRITE, Rights.ROLE_TRF_UPLOAD, Rights.ROLE_TRF_READ]}>
+                  <ETrfPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="e-trf/:requestId/view"
+              element={
+                <ProtectedRoute
+                  requireAnyRight={[
+                    Rights.ROLE_SYSTEM_ADMIN,
+                    Rights.ROLE_E_TRF_WRITE,
+                    Rights.ROLE_TRF_UPLOAD,
+                    Rights.ROLE_TRF_READ,
+                    Rights.ROLE_TRF_APPROVE,
+                    Rights.ROLE_TRF_REVISE,
+                    Rights.ROLE_AR_GENERATE_READ,
+                  ]}
+                >
+                  <ETrfPage readOnlyMode={true} />
                 </ProtectedRoute>
               }
             />
@@ -102,6 +151,14 @@ function App() {
               element={
                 <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_INCIDENTS_READ, Rights.ROLE_INCIDENTS_RESOLVE]}>
                   <IncidentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="grn-failures"
+              element={
+                <ProtectedRoute requireAnyRight={[Rights.ROLE_SYSTEM_ADMIN, Rights.ROLE_GRN_FAILURES_READ]}>
+                  <GrnFailuresPage />
                 </ProtectedRoute>
               }
             />
@@ -158,7 +215,8 @@ function App() {
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </ProductDetailsProvider>
       </ToastProvider>
     </BrowserRouter>
   )

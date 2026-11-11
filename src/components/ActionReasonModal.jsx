@@ -15,21 +15,30 @@ export default function ActionReasonModal({
   loading = false,
   required = true,
   maxLength = 500,
+  showUnitsUsed = false,
+  initialUnitsUsed = 1,
 }) {
   const [reason, setReason] = useState('')
+  const [unitsUsed, setUnitsUsed] = useState(initialUnitsUsed || 1)
 
   useEffect(() => {
     if (isOpen) {
       setReason('')
+      setUnitsUsed(initialUnitsUsed || 1)
     }
-  }, [isOpen])
+  }, [isOpen, initialUnitsUsed])
 
   if (!isOpen) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (required && !reason.trim()) return
-    onSubmit(reason.trim())
+    if (required && !(reason?.trim())) return
+    if (showUnitsUsed && (!unitsUsed || Number(unitsUsed) <= 0)) return
+    if (showUnitsUsed) {
+      onSubmit({ notes: reason?.trim() || '', testsUsed: Number(unitsUsed) })
+    } else {
+      onSubmit(reason?.trim() || '')
+    }
   }
 
   const colorStyles = {
@@ -37,6 +46,8 @@ export default function ActionReasonModal({
     amber: 'bg-amber-600 hover:bg-amber-700 text-white',
     rose: 'bg-rose-600 hover:bg-rose-700 text-white',
     teal: 'bg-teal-600 hover:bg-teal-700 text-white',
+    violet: 'bg-violet-600 hover:bg-violet-700 text-white',
+    indigo: 'bg-indigo-600 hover:bg-indigo-700 text-white',
   }
 
   const iconBgStyles = {
@@ -44,6 +55,8 @@ export default function ActionReasonModal({
     amber: 'bg-amber-100 text-amber-700',
     rose: 'bg-rose-100 text-rose-700',
     teal: 'bg-teal-100 text-teal-700',
+    violet: 'bg-violet-100 text-violet-700',
+    indigo: 'bg-indigo-100 text-indigo-700',
   }
 
   return (
@@ -75,13 +88,34 @@ export default function ActionReasonModal({
             </div>
           )}
 
+          {showUnitsUsed && (
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                Units / Samples Consumed for this Test <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={unitsUsed}
+                onChange={(e) => setUnitsUsed(e.target.value)}
+                placeholder="Number of units used..."
+                className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 shadow-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+              <span className="block text-[10.5px] text-slate-500 mt-0.5">
+                Physical sample units deducted from QC testing inventory ledger.
+              </span>
+            </div>
+          )}
+
           <div>
             <label className="block text-[11px] font-semibold text-slate-700 mb-1">
               Remarks / Notes {required && <span className="text-rose-500">*</span>}
             </label>
             <textarea
               rows={3}
-              value={reason}
+              value={reason || ''}
               onChange={(e) => setReason(e.target.value)}
               placeholder={placeholder}
               maxLength={maxLength}
@@ -89,7 +123,7 @@ export default function ActionReasonModal({
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 shadow-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
             />
             <span className="block text-right text-[10px] text-slate-400 mt-0.5">
-              {reason.length}/{maxLength}
+              {reason?.length || 0}/{maxLength}
             </span>
           </div>
 
@@ -104,7 +138,7 @@ export default function ActionReasonModal({
             </button>
             <button
               type="submit"
-              disabled={loading || (required && !reason.trim())}
+              disabled={loading || (required && !(reason?.trim()))}
               className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-semibold shadow-sm transition disabled:opacity-50 ${colorStyles[confirmColor] || colorStyles.brand}`}
             >
               {loading && <Icon name="refreshCw" className="h-3.5 w-3.5 animate-spin" />}

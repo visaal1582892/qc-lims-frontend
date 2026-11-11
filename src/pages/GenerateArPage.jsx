@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+import { downloadFileFromProxy, viewFile } from '../utils/fileDownload'
 import {
   fetchGenerateArRequests,
   fetchNextProposedAr,
@@ -31,10 +33,13 @@ import useAuth from '../auth/useAuth'
 import { Rights } from '../constants/rights'
 import TransferOrderDetailsModal from '../components/TransferOrderDetailsModal'
 import GrnDetailsModal from '../components/GrnDetailsModal'
+import ProductIdLink from '../components/ProductIdLink'
 
 export default function GenerateArPage() {
   const dispatch = useDispatch()
-  const { addToast } = useToast()
+  const navigate = useNavigate()
+  const toast = useToast()
+  const { addToast } = toast
   const { hasRight } = useAuth()
 
   const canGenerateAr = hasRight(Rights.ROLE_SYSTEM_ADMIN) || hasRight(Rights.ROLE_AR_GENERATE_CREATE)
@@ -222,16 +227,9 @@ export default function GenerateArPage() {
     }
   }
 
-  // Download TRF document safely
-  const handleDownloadTrf = (trfUrl, filename = 'trf-document.pdf') => {
-    if (!trfUrl) return
-    const downloadUrl = qcRequestsApi.getProxyDownloadUrl(trfUrl)
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  // Download TRF document safely via authenticated proxy
+  const handleDownloadTrf = (trfUrl, filename = 'trf-document') => {
+    downloadFileFromProxy(trfUrl, filename, toast)
   }
 
   const allPageIds = items.map((i) => i.requestId)
@@ -362,11 +360,11 @@ export default function GenerateArPage() {
                 <th className="w-35 px-2.5 py-2.5">Batch ID</th>
 
                 {/* FIXED / STICKY COLUMNS ON RIGHT */}
-                <th className="w-[100px] min-w-[100px] max-w-[100px] sticky right-[120px] bg-slate-50 z-20 px-2.5 py-2.5 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                <th className="w-[100px] min-w-[100px] max-w-[100px] sticky right-[155px] bg-slate-50 z-20 px-2.5 py-2.5 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
                   Status
                 </th>
-                <th className="w-[120px] min-w-[120px] max-w-[120px] sticky right-0 bg-slate-50 z-20 px-2.5 py-2.5 text-center">
-                  TRF URL
+                <th className="w-[155px] min-w-[155px] max-w-[155px] sticky right-0 bg-slate-50 z-20 px-2.5 py-2.5 text-center">
+                  TRF Actions
                 </th>
               </MasterHeaderRow>
 
@@ -433,8 +431,8 @@ export default function GenerateArPage() {
                   />
                 </th>
                 {/* FIXED COLUMNS FILTERS */}
-                <th className="w-[100px] min-w-[100px] max-w-[100px] sticky right-[120px] bg-slate-50 z-20 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]" />
-                <th className="w-[120px] min-w-[120px] max-w-[120px] sticky right-0 bg-slate-50 z-20" />
+                <th className="w-[100px] min-w-[100px] max-w-[100px] sticky right-[155px] bg-slate-50 z-20 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]" />
+                <th className="w-[155px] min-w-[155px] max-w-[155px] sticky right-0 bg-slate-50 z-20" />
               </MasterFilterRow>
             </MasterTableHeader>
 
@@ -497,8 +495,8 @@ export default function GenerateArPage() {
                       <td className="px-2.5 py-2 font-mono text-[11px] text-slate-700">
                         {item.fromStoreId || '-'}
                       </td>
-                      <td className="px-2.5 py-2 font-mono font-medium text-slate-900">
-                        {item.productId}
+                      <td className="px-2.5 py-2 font-mono text-[11px]">
+                        <ProductIdLink productId={item.productId} />
                       </td>
                       <td className="px-2.5 py-2 font-mono text-[11px] text-slate-600">
                         {item.batchId}
@@ -506,7 +504,7 @@ export default function GenerateArPage() {
 
                       {/* FIXED STATUS COLUMN */}
                       <td
-                        className={`w-[100px] min-w-[100px] max-w-[100px] px-2.5 py-2 text-center sticky right-[120px] z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)] ${
+                        className={`w-[100px] min-w-[100px] max-w-[100px] px-2.5 py-2 text-center sticky right-[155px] z-10 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)] ${
                           isSelected ? 'bg-teal-50' : 'bg-white group-hover:bg-slate-50'
                         }`}
                       >
@@ -517,30 +515,40 @@ export default function GenerateArPage() {
 
                       {/* FIXED TRF ACTION BUTTONS COLUMN */}
                       <td
-                        className={`w-[120px] min-w-[120px] max-w-[120px] px-2.5 py-2 text-center sticky right-0 z-10 ${
+                        className={`w-[155px] min-w-[155px] max-w-[155px] px-2.5 py-2 text-center sticky right-0 z-10 ${
                           isSelected ? 'bg-teal-50' : 'bg-white group-hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-center justify-center gap-1.5">
-                          {/* Eye Button: View TRF */}
-                          {canDownloadTrf && (
+                          {/* View E-TRF details */}
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/e-trf/${item.requestId}/view`, { state: { backTo: '/generate-ar', backLabel: 'Back to Generate AR' } })}
+                            title="View Electronic TRF Details"
+                            className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200/70 transition hover:bg-indigo-600 hover:text-white cursor-pointer"
+                          >
+                            <Icon name="fileText" className="h-3.5 w-3.5" />
+                          </button>
+
+                          {/* Eye Button: View optional attached TRF Document */}
+                          {canDownloadTrf && item.trfUrl && (
                             <button
                               type="button"
-                              onClick={() => window.open(item.trfUrl, '_blank', 'noopener,noreferrer')}
-                              title="View TRF Document"
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200/70 transition hover:bg-teal-600 hover:text-white"
+                              onClick={() => viewFile(item.trfUrl)}
+                              title="View Attached TRF Document"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200/70 transition hover:bg-teal-600 hover:text-white cursor-pointer"
                             >
                               <Icon name="eye" className="h-3.5 w-3.5" />
                             </button>
                           )}
 
-                          {/* Download Button: Download TRF */}
-                          {canDownloadTrf && (
+                          {/* Download Button: Download optional attached TRF Document */}
+                          {canDownloadTrf && item.trfUrl && (
                             <button
                               type="button"
-                              onClick={() => handleDownloadTrf(item.trfUrl, `TRF_${item.requestId}.pdf`)}
-                              title="Download TRF Document"
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-700 hover:text-white"
+                              onClick={() => handleDownloadTrf(item.trfUrl, `TRF_Req_${item.requestId}`)}
+                              title="Download Attached TRF Document"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-700 hover:text-white cursor-pointer"
                             >
                               <Icon name="download" className="h-3.5 w-3.5" />
                             </button>
@@ -551,8 +559,8 @@ export default function GenerateArPage() {
                             <button
                               type="button"
                               onClick={() => dispatch(openReviseModal(item))}
-                              title="Revise TRF Document"
-                              className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200 transition hover:bg-amber-600 hover:text-white"
+                              title="Revise TRF"
+                              className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-50 text-amber-700 ring-1 ring-amber-200 transition hover:bg-amber-600 hover:text-white cursor-pointer"
                             >
                               <Icon name="edit" className="h-3.5 w-3.5" />
                             </button>
@@ -688,7 +696,7 @@ export default function GenerateArPage() {
                   Batch: {selectedRequestForRevise.batch || selectedRequestForRevise.batchId}
                 </p>
                 <p className="mt-1 text-[11px]">
-                  Flagging this document will move the request back to the <strong>Upload TRFs</strong> page for a replacement file.
+                  Flagging this document will move the request back to the <strong>TRF Requests</strong> page for editing and resubmission.
                 </p>
               </div>
 
@@ -701,12 +709,12 @@ export default function GenerateArPage() {
                   value={reviseRemarks}
                   onChange={(e) => dispatch(setReviseRemarks(e.target.value))}
                   placeholder="e.g., Illegible scan, missing analyst signature, incorrect product name…"
-                  maxLength={500}
+                  maxLength={1000}
                   required
                   className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 shadow-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                 />
                 <span className="block text-right text-[10px] text-slate-400 mt-0.5">
-                  {reviseRemarks.length}/500
+                  {reviseRemarks.length}/1000
                 </span>
               </div>
 
@@ -766,7 +774,7 @@ export default function GenerateArPage() {
                   Flagging <span className="font-bold text-amber-800">{selectedIds.length}</span> request(s) for TRF revision
                 </p>
                 <p className="mt-1 text-[11px]">
-                  All selected requests will be marked as <strong>NEEDS_REVISION</strong> and moved back to the <strong>Upload TRFs</strong> page.
+                  All selected requests will be marked as <strong>NEEDS_REVISION</strong> and moved back to the <strong>TRF Requests</strong> page.
                 </p>
               </div>
 
@@ -779,12 +787,12 @@ export default function GenerateArPage() {
                   value={bulkReviseRemarks}
                   onChange={(e) => setBulkReviseRemarks(e.target.value)}
                   placeholder="e.g., Illegible scans, missing signatures, or document discrepancies…"
-                  maxLength={500}
+                  maxLength={1000}
                   required
                   className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 shadow-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                 />
                 <span className="block text-right text-[10px] text-slate-400 mt-0.5">
-                  {bulkReviseRemarks.length}/500
+                  {bulkReviseRemarks.length}/1000
                 </span>
               </div>
 
@@ -873,7 +881,9 @@ export default function GenerateArPage() {
                         <tr key={req.requestId} className="hover:bg-slate-50/70">
                           <td className="px-3 py-2 font-mono font-semibold text-slate-900">{req.requestId}</td>
                           <td className="px-3 py-2 font-mono text-slate-700">{req.fromStoreId || '-'}</td>
-                          <td className="px-3 py-2 font-mono text-slate-700 font-medium">{req.productId}</td>
+                          <td className="px-3 py-2 font-mono text-[11px]">
+                            <ProductIdLink productId={req.productId} />
+                          </td>
                           <td className="px-3 py-2 font-mono text-slate-600">{req.batchId}</td>
                         </tr>
                       ))}
@@ -952,7 +962,9 @@ export default function GenerateArPage() {
                               {item.statusDescription || item.status}
                             </span>
                           </td>
-                          <td className="px-3 py-2 font-mono text-slate-700">{item.productId}</td>
+                          <td className="px-3 py-2 font-mono text-[11px]">
+                            <ProductIdLink productId={item.productId} />
+                          </td>
                           <td className="px-3 py-2 font-mono text-slate-600">{item.batchId}</td>
                         </tr>
                       ))}

@@ -22,12 +22,14 @@ const OVERVIEW_NAV_LINKS = [
 
 const QC_OPERATIONS_NAV_LINKS = [
   { to: '/payload-inward', label: 'Payload Inward', icon: 'fileText', rights: ['ROLE_QC_REQUEST_CREATE', 'ROLE_QC_REQUEST_READ'] },
+  { to: '/create-qc-requests', label: 'Create QC Requests', icon: 'filePlus', rights: ['ROLE_QC_REQUEST_CREATE', 'ROLE_QC_REQUEST_READ'] },
   { to: '/qc-requests', label: 'Pending QC Requests', icon: 'clipboardList', rights: ['ROLE_QC_REQUEST_READ'] },
   { to: '/qc-request-tracking', label: 'QC Request Tracking', icon: 'search', rights: ['ROLE_QC_REQUEST_TRACKING_READ'] },
-  { to: '/upload-trfs', label: 'Upload TRFs', icon: 'cloudUpload', rights: ['ROLE_TRF_READ', 'ROLE_TRF_UPLOAD'] },
+  { to: '/trf-requests', label: 'TRF Requests', icon: 'fileText', rights: ['ROLE_TRF_READ', 'ROLE_TRF_UPLOAD', 'ROLE_E_TRF_WRITE', 'ROLE_TRF_APPROVE', 'ROLE_TRF_REVISE'] },
   { to: '/generate-ar', label: 'Generate AR', icon: 'badgeCheck', rights: ['ROLE_AR_GENERATE_READ', 'ROLE_AR_GENERATE_CREATE'] },
   { to: '/assigned-tests', label: 'Assigned Tests', icon: 'flaskConical', rights: ['ROLE_ASSIGNED_TESTS_READ', 'ROLE_TEST_EXECUTE', 'ROLE_TEST_REVIEW'] },
   { to: '/incidents', label: 'Incidents', icon: 'alertTriangle', rights: ['ROLE_INCIDENTS_READ', 'ROLE_INCIDENTS_RESOLVE'] },
+  { to: '/grn-failures', label: 'GRN Failures', icon: 'alertCircle', rights: ['ROLE_GRN_FAILURES_READ'] },
 ]
 
 const ADMIN_NAV_LINKS = [
@@ -78,13 +80,16 @@ export default function AppLayout() {
     if (location.pathname === '/masters') return 'Master Hub'
     if (location.pathname === '/dashboard') return 'Dashboard'
     if (location.pathname === '/payload-inward') return 'Payload Inward'
+    if (location.pathname === '/create-qc-requests') return 'Create QC Requests'
     if (location.pathname === '/qc-requests') return 'Pending QC Requests'
     if (location.pathname === '/qc-request-tracking') return 'QC Request Tracking'
-    if (location.pathname === '/upload-trfs') return 'Upload TRFs'
+    if (location.pathname === '/trf-requests') return 'TRF Requests'
+    if (location.pathname.startsWith('/e-trf/')) return 'Electronic TRF (E-TRF)'
     if (location.pathname === '/generate-ar') return 'Generate AR Number'
     if (location.pathname === '/assigned-tests') return 'Assigned Tests'
     if (location.pathname.startsWith('/assigned-tests/')) return 'Test Execution'
     if (location.pathname === '/incidents') return 'QC Incidents'
+    if (location.pathname === '/grn-failures') return 'GRN Failures & Audit'
     if (location.pathname.startsWith('/masters/')) return 'Master Data'
     return 'QC LIMS'
   }, [location.pathname])

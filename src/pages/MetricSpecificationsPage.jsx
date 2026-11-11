@@ -3,6 +3,7 @@ import { useAuth } from '../auth/useAuth'
 import { mastersApi } from '../api/masters'
 import { Rights } from '../constants/rights'
 import BulkUploadModal from '../components/masters/BulkUploadModal'
+import ProductIdLink from '../components/ProductIdLink'
 import Icon from '../components/Icon'
 import Pagination from '../components/Pagination'
 import BackToMaster from '../components/admin/BackToMaster'
@@ -232,7 +233,11 @@ export default function MetricSpecificationsPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs text-slate-500">#{item.id} (Cfg: {item.inventoryConfiguration?.id})</span>
-                    <span className="font-medium text-slate-800">{item.inventoryConfiguration?.productId || '-'}</span>
+                    <ProductIdLink
+                      productId={item.inventoryConfiguration?.productId}
+                      className="text-xs"
+                      inactive={!isItemActive(item)}
+                    />
                     <span className="text-xs text-slate-600">{item.inventoryConfiguration?.testParameter?.name || '-'}</span>
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -290,8 +295,11 @@ function MetricSpecRow({ item }) {
       <td className="px-3 py-2.5 font-mono text-xs text-slate-700">
         {item.inventoryConfiguration?.id != null ? item.inventoryConfiguration.id : '-'}
       </td>
-      <td className={`px-3 py-2.5 font-medium text-slate-800 ${!active ? 'line-through text-slate-400' : ''}`}>
-        {item.inventoryConfiguration?.productId || '-'}
+      <td className="px-3 py-2.5">
+        <ProductIdLink
+          productId={item.inventoryConfiguration?.productId}
+          inactive={!active}
+        />
       </td>
       <td className={`px-3 py-2.5 text-slate-600 ${!active ? 'line-through text-slate-400' : ''}`}>
         {item.inventoryConfiguration?.testParameter?.name || '-'}

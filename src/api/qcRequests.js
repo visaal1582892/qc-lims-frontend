@@ -38,18 +38,7 @@ export const qcRequestsApi = {
     return api.get('/v1/qc-requests/unique-to-ids')
   },
 
-  // Upload TRF file for a single request
-  uploadTrf: (requestId, file) => {
-    const formData = new FormData()
-    formData.append('file', file)
-    return api.post(`/v1/qc-requests/${requestId}/upload-trf`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-  },
-
-  // Mark TRF as needing revision with remarks
+  // Mark TRF as needing revision with remarks (Generate AR)
   reviseTrf: (requestId, remarks) => {
     return api.post(`/v1/qc-requests/${requestId}/revise-trf`, { remarks })
   },
@@ -59,9 +48,9 @@ export const qcRequestsApi = {
     return `/api/v1/qc-requests/proxy-download?url=${encodeURIComponent(fileUrl)}`
   },
 
-  downloadProxyFile: (fileUrl) => {
+  downloadProxyFile: (fileUrl, filename) => {
     return api.get('/v1/qc-requests/proxy-download', {
-      params: { url: fileUrl },
+      params: { url: fileUrl, filename },
       responseType: 'blob',
     })
   },
@@ -85,6 +74,59 @@ export const qcRequestsApi = {
     }
     if (status) params.status = status
     return api.get('/v1/grn-details', { params })
+  },
+
+  // Fetch GRN batches with inventory for manual QC request creation
+  getGrnBatchesWithInventory: (grnId) => {
+    return api.get('/v1/grn-details/with-inventory', { params: { grnId } })
+  },
+
+  // Manual create QC requests
+  manualCreateQcRequests: (payload) => {
+    return api.post('/v1/qc-requests/manual-create', payload)
+  },
+
+  // Paginated query for GRN failures
+  getGrnFailures: (params) => {
+    return api.get('/v1/grn-failures', { params })
+  },
+}
+
+export const eTrfApi = {
+  // Get prefill data for E-TRF
+  getPrefill: (requestId) => {
+    return api.get(`/v1/e-trf/${requestId}/prefill`)
+  },
+
+  // Upload optional TRF document to CDN (returns { url, thumbnailUrl, originalName } without DB write)
+  uploadFile: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post('/v1/e-trf/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  // Save E-TRF form details (transitions status to PENDING_APPROVAL)
+  saveDetails: (requestId, payload) => {
+    return api.post(`/v1/e-trf/${requestId}`, payload)
+  },
+
+  // Get saved E-TRF form details
+  getDetails: (requestId) => {
+    return api.get(`/v1/e-trf/${requestId}`)
+  },
+
+  // Approve a PENDING_APPROVAL TRF request
+  approveTrf: (requestId) => {
+    return api.post(`/v1/e-trf/${requestId}/approve`)
+  },
+
+  // Flag a PENDING_APPROVAL TRF request as NEEDS_REVISION with remarks
+  reviseTrf: (requestId, remarks) => {
+    return api.post(`/v1/e-trf/${requestId}/revise`, { remarks })
   },
 }
 

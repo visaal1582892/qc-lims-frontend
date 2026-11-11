@@ -28,10 +28,12 @@ import MasterPageLayout, {
 import ActionReasonModal from '../components/ActionReasonModal'
 import TransferModal from '../components/TransferModal'
 import TestHistoryModal from '../components/TestHistoryModal'
+import ProductIdLink from '../components/ProductIdLink'
 import useDebounce from '../hooks/useDebounce'
 import useAuth from '../auth/useAuth'
 import { Rights } from '../constants/rights'
 import { useToast } from '../components/Toast'
+import { downloadFileFromProxy } from '../utils/fileDownload'
 
 export default function AssignedTestsPage() {
   const dispatch = useDispatch()
@@ -180,7 +182,7 @@ export default function AssignedTestsPage() {
         placeholder: 'Reason for cancellation...',
         confirmText: 'Cancel Test',
         confirmColor: 'rose',
-        icon: 'slash',
+        icon: 'ban',
       })
     } else if (actionType === 'OUTSOURCE') {
       setModalConfig({
@@ -260,20 +262,8 @@ export default function AssignedTestsPage() {
   }
 
   // TRF Download Handler
-  const handleDownloadTrf = async (trfUrl, fileName) => {
-    try {
-      const response = await qcRequestsApi.downloadProxyFile(trfUrl)
-      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' })
-      const link = document.createElement('a')
-      link.href = window.URL.createObjectURL(blob)
-      link.download = fileName || 'TRF_Document.pdf'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(link.href)
-    } catch {
-      toast.error('Failed to download TRF file')
-    }
+  const handleDownloadTrf = (trfUrl, fileName) => {
+    downloadFileFromProxy(trfUrl, fileName, toast)
   }
 
   const getStatusBadge = (status) => {
@@ -298,19 +288,53 @@ export default function AssignedTestsPage() {
   }
 
   return (
-    <MasterPageLayout
-      title="Assigned Tests"
-      description="View and execute laboratory quality control tests assigned to you"
-      totalCount={total}
-      hasActiveFilters={hasActiveFilters}
-      onClearFilters={handleClearFilters}
-    >
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-white shadow-xs ring-1 ring-slate-200/80 rounded-xl">
-        <div className="flex-1 min-h-0 overflow-auto">
+    <div className="mx-auto flex h-full min-h-0 w-full flex-1 flex-col gap-3">
+      {/* Page Header */}
+      <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600 ring-1 ring-teal-100">
+            <Icon name="flaskConical" className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold text-slate-900">Assigned Tests</h1>
+            <p className="text-xs text-slate-500">
+              {total} test{total === 1 ? '' : 's'} total • View and execute laboratory quality control tests assigned to you
+            </p>
+          </div>
+        </div>
+
+        {/* Global Toolbar buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            disabled={!hasActiveFilters}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-xs transition hover:bg-slate-50 disabled:opacity-40"
+            title="Clear all filters"
+          >
+            <Icon name="rotateCcw" className="h-3.5 w-3.5" />
+            Clear Filters
+          </button>
+
+          <button
+            type="button"
+            onClick={() => dispatch(fetchAssignedTests())}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]"
+            title="Refresh list"
+          >
+            <Icon name="refreshCw" className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      {/* Table Container */}
+      <MasterPageLayout>
+        <div className="hidden flex-1 min-h-0 overflow-auto sm:block">
           <table className="w-full min-w-max border-separate border-spacing-0 text-left text-xs text-slate-600">
             <MasterTableHeader>
               <MasterHeaderRow>
-                <th className="w-12 px-2.5 py-2.5 font-semibold text-slate-700 text-center">#</th>
+                <th className="w-14 min-w-[50px] px-2.5 py-2.5 font-semibold text-slate-700 text-center">S.No</th>
                 <th className="w-[110px] min-w-[100px] px-2.5 py-2.5 font-semibold text-slate-700">AR Number</th>
                 <th className="w-[110px] min-w-[85px] px-2.5 py-2.5 font-semibold text-slate-700">Product ID</th>
                 <th className="min-w-[140px] px-2.5 py-2.5 font-semibold text-slate-700">Parameter Name</th>
@@ -394,13 +418,11 @@ export default function AssignedTestsPage() {
 
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <TableStatusRow colSpan={10} type="loading" message="Loading assigned tests..." />
+                <TableStatusRow colSpan={10}>Loading assigned tests…</TableStatusRow>
               ) : items.length === 0 ? (
-                <TableStatusRow
-                  colSpan={10}
-                  type="empty"
-                  message={hasActiveFilters ? 'No tests match the current filter criteria' : 'No tests currently assigned to you'}
-                />
+                <TableStatusRow colSpan={10}>
+                  {hasActiveFilters ? 'No matching tests found.' : 'No tests currently assigned to you.'}
+                </TableStatusRow>
               ) : (
                 items.map((item, idx) => {
                   const isMenuOpen = activeMenuId === item.detailId
@@ -418,8 +440,8 @@ export default function AssignedTestsPage() {
                       <td className="px-2.5 py-2 font-mono font-semibold text-slate-800">
                         {item.arNumber || '-'}
                       </td>
-                      <td className="px-2.5 py-2 font-mono font-medium text-slate-800">
-                        {item.productId || '-'}
+                      <td className="px-2.5 py-2 font-mono text-[11px]">
+                        <ProductIdLink productId={item.productId} />
                       </td>
                       <td className="px-2.5 py-2 font-medium text-slate-800">
                         {item.parameterName}
@@ -452,7 +474,7 @@ export default function AssignedTestsPage() {
                             {canDownloadTrf && (
                               <button
                                 type="button"
-                                onClick={() => handleDownloadTrf(item.trfUrl, `TRF_${item.requestId}.pdf`)}
+                                onClick={() => handleDownloadTrf(item.trfUrl, `TRF_${item.arNumber || item.requestId}`)}
                                 title="Download TRF Document"
                                 className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-700 hover:text-white"
                               >
@@ -599,32 +621,54 @@ export default function AssignedTestsPage() {
                                       onClick={() => openActionModal(item, 'CANCEL')}
                                       className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-rose-600 hover:bg-rose-50"
                                     >
-                                      <Icon name="slash" className="h-3.5 w-3.5 text-rose-500" />
+                                      <Icon name="ban" className="h-3.5 w-3.5 text-rose-500" />
                                       Cancel
                                     </button>
                                   </div>
                                 )}
 
-                                {/* SUBMITTED Actions: Approve & Rework */}
-                                {isSubmitted && canReview && (
-                                  <div className="py-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleApprove(item.detailId)}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-emerald-700 hover:bg-emerald-50"
-                                    >
-                                      <Icon name="checkCircle2" className="h-3.5 w-3.5 text-emerald-600" />
-                                      Approve
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => openActionModal(item, 'REWORK')}
-                                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-amber-700 hover:bg-amber-50"
-                                    >
-                                      <Icon name="refreshCw" className="h-3.5 w-3.5 text-amber-600" />
-                                      Rework
-                                    </button>
-                                  </div>
+                                {/* SUBMITTED Actions: View Test, History, Approve & Rework */}
+                                {isSubmitted && (
+                                  <>
+                                    <div className="py-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleViewTest(item.detailId)}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-slate-700 hover:bg-slate-50"
+                                      >
+                                        <Icon name="eye" className="h-3.5 w-3.5 text-slate-500" />
+                                        View Test
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => openHistoryModal(item.detailId)}
+                                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-blue-700 hover:bg-blue-50"
+                                      >
+                                        <Icon name="clock" className="h-3.5 w-3.5 text-blue-600" />
+                                        History
+                                      </button>
+                                    </div>
+                                    {canReview && (
+                                      <div className="py-1 border-t border-slate-100">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleApprove(item.detailId)}
+                                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-emerald-700 hover:bg-emerald-50"
+                                        >
+                                          <Icon name="checkCircle2" className="h-3.5 w-3.5 text-emerald-600" />
+                                          Approve
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => openActionModal(item, 'REWORK')}
+                                          className="flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium text-amber-700 hover:bg-amber-50"
+                                        >
+                                          <Icon name="refreshCw" className="h-3.5 w-3.5 text-amber-600" />
+                                          Rework
+                                        </button>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
                               </div>
                             )}
@@ -640,7 +684,7 @@ export default function AssignedTestsPage() {
         </div>
 
         {/* Footer pagination */}
-        <div className="border-t border-slate-100 bg-slate-50/50 px-4 py-2.5">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-4 py-1">
           <Pagination
             page={page}
             totalPages={totalPages}
@@ -650,7 +694,7 @@ export default function AssignedTestsPage() {
             loading={loading}
           />
         </div>
-      </div>
+      </MasterPageLayout>
 
       {/* Modal for Remarks/Reason */}
       <ActionReasonModal
@@ -682,6 +726,6 @@ export default function AssignedTestsPage() {
         onClose={() => { setHistoryModalOpen(false); setHistoryDetailId(null) }}
         detailId={historyDetailId}
       />
-    </MasterPageLayout>
+    </div>
   )
 }

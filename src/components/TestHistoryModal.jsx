@@ -1,34 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { assignedTestsApi } from '../api/assignedTests'
+import { fetchTestHistoryThunk } from '../store/slices/testExecutionSlice'
 import Icon from './Icon'
-import { useToast } from './Toast'
 
 export default function TestHistoryModal({ isOpen, onClose, detailId }) {
+  const dispatch = useDispatch()
   const navigate = useNavigate()
-  const toast = useToast()
 
-  const [history, setHistory] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const { historyData: history, loading } = useSelector((state) => state.testExecution.history)
 
   useEffect(() => {
     if (isOpen && detailId) {
-      loadHistory()
+      dispatch(fetchTestHistoryThunk(detailId))
     }
-  }, [isOpen, detailId])
-
-  const loadHistory = async () => {
-    setLoading(true)
-    try {
-      const res = await assignedTestsApi.getTestHistory(detailId)
-      setHistory(res.data)
-    } catch {
-      toast.error('Failed to load test history')
-      setHistory(null)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [isOpen, detailId, dispatch])
 
   const handleViewAttempt = (attemptDetailId) => {
     onClose()
@@ -120,40 +106,51 @@ export default function TestHistoryModal({ isOpen, onClose, detailId }) {
               <span className="text-xs">No prior attempts found for this test</span>
             </div>
           ) : (
-            history.attempts.map((attempt) => (
-              <div
-                key={attempt.detailId}
-                className="rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden"
-              >
-                {/* Attempt Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 px-4 py-3 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    {/* Clickable attempt number — navigates to View Test */}
-                    <button
-                      type="button"
-                      onClick={() => handleViewAttempt(attempt.detailId)}
-                      className="inline-flex items-center rounded-md bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-brand-700 active:scale-95 transition-all cursor-pointer"
-                      title="Click to view this attempt"
-                    >
-                      Attempt {attempt.attemptNumber}
-                    </button>
-                    {getStatusBadge(attempt.status)}
-                    {attempt.incidentId && (
-                      <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
-                        <Icon name="alertTriangle" className="h-3 w-3" />
-                        Incident #{attempt.incidentId}
+            history.attempts.map((attempt) => {
+              const isUnsubmitted = attempt.status === 'ASSIGNED' || attempt.status === 'TESTING' || (detailId && attempt.detailId === Number(detailId) && !['SUBMITTED', 'APPROVED', 'REJECTED', 'HOLD', 'CANCELLED', 'OUTSOURCED', 'INVALID', 'TRANSFERRED'].includes(attempt.status))
+
+              return (
+                <div
+                  key={attempt.detailId}
+                  className="rounded-xl border border-slate-200/80 bg-white shadow-sm overflow-hidden"
+                >
+                  {/* Attempt Header */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/70 px-4 py-3 border-b border-slate-100">
+                    <div className="flex items-center gap-3">
+                      {isUnsubmitted ? (
+                        <span
+                          className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 ring-1 ring-slate-200 cursor-default"
+                          title="Current unsubmitted attempt"
+                        >
+                          Attempt {attempt.attemptNumber} (Current)
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleViewAttempt(attempt.detailId)}
+                          className="inline-flex items-center rounded-md bg-brand-600 px-2.5 py-1 text-xs font-bold text-white shadow-xs hover:bg-brand-700 active:scale-95 transition-all cursor-pointer"
+                          title="Click to view this attempt"
+                        >
+                          Attempt {attempt.attemptNumber}
+                        </button>
+                      )}
+                      {getStatusBadge(attempt.status)}
+                      {attempt.incidentId && (
+                        <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-rose-200">
+                          <Icon name="alertTriangle" className="h-3 w-3" />
+                          Incident #{attempt.incidentId}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <span>
+                        Analyst: <strong className="text-slate-700">{attempt.userFullName || attempt.userId}</strong>
                       </span>
-                    )}
+                      {attempt.createdAt && (
+                        <span>{new Date(attempt.createdAt).toLocaleString()}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-slate-500">
-                    <span>
-                      Analyst: <strong className="text-slate-700">{attempt.userFullName || attempt.userId}</strong>
-                    </span>
-                    {attempt.createdAt && (
-                      <span>{new Date(attempt.createdAt).toLocaleString()}</span>
-                    )}
-                  </div>
-                </div>
 
                 <div className="p-4 space-y-4">
                   {/* Submitted Metric Values if any */}
@@ -219,7 +216,8 @@ export default function TestHistoryModal({ isOpen, onClose, detailId }) {
                   )}
                 </div>
               </div>
-            ))
+              )
+            })
           )}
         </div>
 

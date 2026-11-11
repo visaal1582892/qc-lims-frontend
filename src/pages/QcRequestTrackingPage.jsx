@@ -6,7 +6,9 @@ import {
   setFilter,
   clearFilters,
 } from '../store/slices/qcRequestTrackingSlice'
-import { qcRequestsApi } from '../api/qcRequests'
+import { downloadFileFromProxy, viewFile } from '../utils/fileDownload'
+import TrfStatusBadge from '../components/TrfStatusBadge'
+import { useToast } from '../components/Toast'
 import Icon from '../components/Icon'
 import Pagination from '../components/Pagination'
 import MasterPageLayout, {
@@ -22,9 +24,11 @@ import useAuth from '../auth/useAuth'
 import { Rights } from '../constants/rights'
 import TransferOrderDetailsModal from '../components/TransferOrderDetailsModal'
 import GrnDetailsModal from '../components/GrnDetailsModal'
+import ProductIdLink from '../components/ProductIdLink'
 
 export default function QcRequestTrackingPage() {
   const dispatch = useDispatch()
+  const toast = useToast()
   const { hasRight } = useAuth()
 
   const canDownloadTrf =
@@ -98,15 +102,8 @@ export default function QcRequestTrackingPage() {
     dispatch(clearFilters())
   }
 
-  const handleDownloadTrf = (trfUrl, filename = 'trf-document.pdf') => {
-    if (!trfUrl) return
-    const downloadUrl = qcRequestsApi.getProxyDownloadUrl(trfUrl)
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.setAttribute('download', filename)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const handleDownloadTrf = (trfUrl, filename = 'trf-document') => {
+    downloadFileFromProxy(trfUrl, filename, toast)
   }
 
   return (
@@ -151,31 +148,38 @@ export default function QcRequestTrackingPage() {
 
       {/* Table Container */}
       <MasterPageLayout>
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div
+          tabIndex={0}
+          role="region"
+          aria-label="QC Request Tracking table"
+          className="flex-1 min-h-0 overflow-auto"
+        >
           <table className="w-full min-w-max text-xs">
+            <caption className="sr-only">QC Request Tracking records</caption>
             <MasterTableHeader>
               <MasterHeaderRow>
-                <th className="w-16 px-2.5 py-2.5">Req ID</th>
-                <th className="w-35 px-2.5 py-2.5">Transfer Order</th>
-                <th className="w-35 px-2.5 py-2.5">AR Number</th>
-                <th className="w-35 px-2.5 py-2.5">GRN ID</th>
-                <th className="w-35 px-2.5 py-2.5">Store ID</th>
-                <th className="w-35 px-2.5 py-2.5">Product ID</th>
-                <th className="w-35 px-2.5 py-2.5">Batch ID</th>
-                <th className="min-w-[160px] px-2.5 py-2.5">TRF Remarks</th>
-                <th className="w-35 px-2.5 py-2.5">Created At</th>
-                <th className="w-35 px-2.5 py-2.5">Created By</th>
-                <th className="w-36 px-2.5 py-2.5">Updated At</th>
-                <th className="w-35 px-2.5 py-2.5">Updated By</th>
+                <th scope="col" className="w-16 px-2.5 py-2.5">Req ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Transfer Order</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">AR Number</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">GRN ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Store ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Product ID</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Batch ID</th>
+                <th scope="col" className="w-24 px-2.5 py-2.5 text-right">Qty Needed</th>
+                <th scope="col" className="min-w-[160px] px-2.5 py-2.5">TRF Remarks</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Created At</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Created By</th>
+                <th scope="col" className="w-36 px-2.5 py-2.5">Updated At</th>
+                <th scope="col" className="w-35 px-2.5 py-2.5">Updated By</th>
 
                 {/* FIXED COLUMNS ON RIGHT IN ORDER: TRF File, TRF Status, Status */}
-                <th className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[245px] bg-slate-50 z-20 px-2.5 py-2.5 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                <th scope="col" className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[255px] bg-slate-50 z-20 px-2.5 py-2.5 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
                   TRF File
                 </th>
-                <th className="w-[130px] min-w-[130px] max-w-[130px] sticky right-[115px] bg-slate-50 z-20 px-2.5 py-2.5 text-center">
+                <th scope="col" className="w-[140px] min-w-[140px] max-w-[140px] sticky right-[115px] bg-slate-50 z-20 px-2.5 py-2.5 text-center">
                   TRF Status
                 </th>
-                <th className="w-[115px] min-w-[115px] max-w-[115px] sticky right-0 bg-slate-50 z-20 px-2.5 py-2.5 text-center">
+                <th scope="col" className="w-[115px] min-w-[115px] max-w-[115px] sticky right-0 bg-slate-50 z-20 px-2.5 py-2.5 text-center">
                   Status
                 </th>
               </MasterHeaderRow>
@@ -244,7 +248,10 @@ export default function QcRequestTrackingPage() {
                   />
                 </th>
 
-                {/* 8. TRF Remarks */}
+                {/* 8. Qty Needed */}
+                <th />
+
+                {/* 9. TRF Remarks */}
                 <th className="px-1.5 py-1.5">
                   <FilterInput
                     value={filters.trfRemarks}
@@ -278,17 +285,18 @@ export default function QcRequestTrackingPage() {
                 </th>
 
                 {/* FIXED FILTERS ON RIGHT: TRF File, TRF Status, Status */}
-                <th className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[245px] bg-slate-50 z-20 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]" />
+                <th className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[255px] bg-slate-50 z-20 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]" />
 
-                <th className="w-[130px] min-w-[130px] max-w-[130px] sticky right-[115px] bg-slate-50 z-20 px-1.5 py-1.5">
+                <th className="w-[140px] min-w-[140px] max-w-[140px] sticky right-[115px] bg-slate-50 z-20 px-1.5 py-1.5">
                   <FilterSelect
                     value={filters.trfStatus}
                     onChange={(val) => dispatch(setFilter({ key: 'trfStatus', value: val }))}
                     options={[
                       ['all', 'All TRFs'],
-                      ['UPLOADED', 'Uploaded'],
-                      ['NEEDS_REVISION', 'Needs Revision'],
-                      ['PENDING_UPLOAD', 'Pending Upload'],
+                      ['PD', 'Pending Details'],
+                      ['PA', 'Pending Approval'],
+                      ['A', 'Approved'],
+                      ['N', 'Needs Revision'],
                     ]}
                   />
                 </th>
@@ -310,9 +318,9 @@ export default function QcRequestTrackingPage() {
 
             <tbody className="divide-y divide-slate-100 bg-white">
               {loading ? (
-                <TableStatusRow colSpan={15}>Loading QC request tracking records…</TableStatusRow>
+                <TableStatusRow colSpan={16}>Loading QC request tracking records…</TableStatusRow>
               ) : items.length === 0 ? (
-                <TableStatusRow colSpan={15}>No matching QC requests found.</TableStatusRow>
+                <TableStatusRow colSpan={16}>No matching QC requests found.</TableStatusRow>
               ) : (
                 items.map((item) => (
                   <tr
@@ -373,8 +381,8 @@ export default function QcRequestTrackingPage() {
                     </td>
 
                     {/* 6. Product ID */}
-                    <td className="px-2.5 py-2 font-mono font-medium text-slate-900">
-                      {item.productId}
+                    <td className="px-2.5 py-2 font-mono text-[11px]">
+                      <ProductIdLink productId={item.productId} />
                     </td>
 
                     {/* 7. Batch ID */}
@@ -382,7 +390,14 @@ export default function QcRequestTrackingPage() {
                       {item.batchId}
                     </td>
 
-                    {/* 8. TRF Remarks */}
+                    {/* 8. Qty Needed */}
+                    <td className="px-2.5 py-2 text-right font-mono text-[11px] font-semibold text-slate-800">
+                      {item.quantityNeededForTesting != null
+                        ? Number(item.quantityNeededForTesting).toLocaleString()
+                        : <span className="text-slate-400 font-normal">-</span>}
+                    </td>
+
+                    {/* 9. TRF Remarks */}
                     <td
                       className="max-w-[200px] truncate px-2.5 py-2 text-slate-600"
                       title={item.trfRemarks || ''}
@@ -411,13 +426,13 @@ export default function QcRequestTrackingPage() {
                     </td>
 
                     {/* 16. TRF File Actions (FIXED) */}
-                    <td className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[245px] bg-white group-hover:bg-slate-50 z-10 px-2.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
+                    <td className="w-[90px] min-w-[90px] max-w-[90px] sticky right-[255px] bg-white group-hover:bg-slate-50 z-10 px-2.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">
                       {item.trfUrl ? (
                         <div className="flex items-center justify-center gap-1.5">
                           {/* Eye: View */}
                           <button
                             type="button"
-                            onClick={() => window.open(item.trfUrl, '_blank', 'noopener,noreferrer')}
+                            onClick={() => viewFile(item.trfUrl)}
                             title="View TRF Document"
                             className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-200/80 transition hover:bg-teal-600 hover:text-white"
                           >
@@ -428,7 +443,7 @@ export default function QcRequestTrackingPage() {
                           {canDownloadTrf && (
                             <button
                               type="button"
-                              onClick={() => handleDownloadTrf(item.trfUrl, `TRF_${item.requestId}.pdf`)}
+                              onClick={() => handleDownloadTrf(item.trfUrl, `TRF_Req_${item.requestId}`)}
                               title="Download TRF Document"
                               className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-700 hover:text-white"
                             >
@@ -442,8 +457,8 @@ export default function QcRequestTrackingPage() {
                     </td>
 
                     {/* 17. TRF Status (FIXED) */}
-                    <td className="w-[130px] min-w-[130px] max-w-[130px] sticky right-[115px] bg-white group-hover:bg-slate-50 z-10 px-2.5 py-2 text-center">
-                      <TrfStatusBadge status={item.trfStatus} trfUrl={item.trfUrl} />
+                    <td className="w-[140px] min-w-[140px] max-w-[140px] sticky right-[115px] bg-white group-hover:bg-slate-50 z-10 px-2.5 py-2 text-center">
+                      <TrfStatusBadge status={item.trfStatus} showEmptyDash />
                     </td>
 
                     {/* 18. Status (FIXED) */}
@@ -506,31 +521,6 @@ function QcStatusBadge({ status }) {
     return (
       <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-200">
         REJECTED
-      </span>
-    )
-  }
-  return <span className="text-slate-400 text-xs">-</span>
-}
-
-function TrfStatusBadge({ status, trfUrl }) {
-  if (status === 'U' || status === 'UPLOADED') {
-    return (
-      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200">
-        UPLOADED
-      </span>
-    )
-  }
-  if (status === 'N' || status === 'NEEDS_REVISION') {
-    return (
-      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-200">
-        NEEDS REVISION
-      </span>
-    )
-  }
-  if (!trfUrl) {
-    return (
-      <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200">
-        PENDING UPLOAD
       </span>
     )
   }

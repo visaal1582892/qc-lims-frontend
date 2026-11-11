@@ -1,21 +1,19 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { qcRequestsApi } from '../../api/qcRequests'
+import { qcRequestsApi, eTrfApi } from '../../api/qcRequests'
 
-export const fetchUploadTrfRequests = createAsyncThunk(
-  'uploadTrf/fetchRequests',
+export const fetchTrfRequests = createAsyncThunk(
+  'trfRequests/fetchRequests',
   async (_, { getState, rejectWithValue }) => {
     try {
-      const { uploadTrf } = getState()
-      const { page, pageSize, filters } = uploadTrf
+      const { trfRequests } = getState()
+      const { page, pageSize, filters } = trfRequests
 
       const params = {
         page,
         size: pageSize,
         sort: 'updatedAt,desc',
         status: 'A',
-        arNumber: 'null',
-        trfPendingUpload: true,
-        trfStatus: filters.trfStatus || undefined,
+        trfStatus: filters.trfStatus && filters.trfStatus !== 'all' ? filters.trfStatus : undefined,
         requestId: filters.requestId || undefined,
         toId: filters.toId || undefined,
         grnId: filters.grnId || undefined,
@@ -32,12 +30,25 @@ export const fetchUploadTrfRequests = createAsyncThunk(
   }
 )
 
-export const uploadTrfThunk = createAsyncThunk(
-  'uploadTrf/upload',
-  async ({ requestId, file }, { dispatch, rejectWithValue }) => {
+export const approveTrfThunk = createAsyncThunk(
+  'trfRequests/approveTrf',
+  async ({ requestId }, { dispatch, rejectWithValue }) => {
     try {
-      const res = await qcRequestsApi.uploadTrf(requestId, file)
-      dispatch(fetchUploadTrfRequests())
+      const res = await eTrfApi.approveTrf(requestId)
+      dispatch(fetchTrfRequests())
+      return res.data
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message)
+    }
+  }
+)
+
+export const reviseTrfRequestThunk = createAsyncThunk(
+  'trfRequests/reviseTrf',
+  async ({ requestId, remarks }, { dispatch, rejectWithValue }) => {
+    try {
+      const res = await eTrfApi.reviseTrf(requestId, remarks)
+      dispatch(fetchTrfRequests())
       return res.data
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.message)
@@ -52,11 +63,11 @@ const initialFilters = {
   storeId: '',
   productId: '',
   batchId: '',
-  trfStatus: '',
+  trfStatus: 'all',
 }
 
-const uploadTrfSlice = createSlice({
-  name: 'uploadTrf',
+const trfRequestsSlice = createSlice({
+  name: 'trfRequests',
   initialState: {
     items: [],
     total: 0,
@@ -66,11 +77,7 @@ const uploadTrfSlice = createSlice({
     page: 0,
     pageSize: 20,
     filters: { ...initialFilters },
-    // Modal state
-    uploadModalOpen: false,
-    selectedRequestForUpload: null,
-    uploading: false,
-    uploadError: null,
+    actionLoading: false,
   },
   reducers: {
     setPage: (state, action) => {
@@ -85,51 +92,44 @@ const uploadTrfSlice = createSlice({
       state.filters = { ...initialFilters }
       state.page = 0
     },
-    openUploadModal: (state, action) => {
-      state.selectedRequestForUpload = action.payload
-      state.uploadModalOpen = true
-      state.uploadError = null
-      state.uploading = false
-    },
-    closeUploadModal: (state) => {
-      state.uploadModalOpen = false
-      state.selectedRequestForUpload = null
-      state.uploadError = null
-      state.uploading = false
-    },
   },
   extraReducers: (builder) => {
     builder
-      // fetchUploadTrfRequests
-      .addCase(fetchUploadTrfRequests.pending, (state) => {
+      // fetchTrfRequests
+      .addCase(fetchTrfRequests.pending, (state) => {
         state.loading = true
         state.error = null
       })
-      .addCase(fetchUploadTrfRequests.fulfilled, (state, action) => {
+      .addCase(fetchTrfRequests.fulfilled, (state, action) => {
         state.loading = false
         const payload = action.payload || {}
         state.items = payload.content || []
         state.totalPages = payload.totalPages ?? payload.page?.totalPages ?? 0
         state.total = payload.totalElements ?? payload.page?.totalElements ?? 0
       })
-      .addCase(fetchUploadTrfRequests.rejected, (state, action) => {
+      .addCase(fetchTrfRequests.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
-      // uploadTrfThunk
-      .addCase(uploadTrfThunk.pending, (state) => {
-        state.uploading = true
-        state.uploadError = null
+      // approveTrfThunk
+      .addCase(approveTrfThunk.pending, (state) => {
+        state.actionLoading = true
       })
-      .addCase(uploadTrfThunk.fulfilled, (state) => {
-        state.uploading = false
-        state.uploadModalOpen = false
-        state.selectedRequestForUpload = null
-        state.uploadError = null
+      .addCase(approveTrfThunk.fulfilled, (state) => {
+        state.actionLoading = false
       })
-      .addCase(uploadTrfThunk.rejected, (state, action) => {
-        state.uploading = false
-        state.uploadError = action.payload
+      .addCase(approveTrfThunk.rejected, (state) => {
+        state.actionLoading = false
+      })
+      // reviseTrfRequestThunk
+      .addCase(reviseTrfRequestThunk.pending, (state) => {
+        state.actionLoading = true
+      })
+      .addCase(reviseTrfRequestThunk.fulfilled, (state) => {
+        state.actionLoading = false
+      })
+      .addCase(reviseTrfRequestThunk.rejected, (state) => {
+        state.actionLoading = false
       })
   },
 })
@@ -138,8 +138,7 @@ export const {
   setPage,
   setFilter,
   resetFilters,
-  openUploadModal,
-  closeUploadModal,
-} = uploadTrfSlice.actions
+} = trfRequestsSlice.actions
 
-export default uploadTrfSlice.reducer
+export default trfRequestsSlice.reducer
+

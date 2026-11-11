@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
+import ProductIdLink from './ProductIdLink'
 import { qcRequestsApi } from '../api/qcRequests'
 
 export default function GrnDetailsModal({ grnId, isOpen, onClose }) {
@@ -107,9 +108,9 @@ export default function GrnDetailsModal({ grnId, isOpen, onClose }) {
                 </div>
 
                 <div>
-                  <span className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider block">Status</span>
+                  <span className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider block">Header GRN Status</span>
                   <span className="mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset bg-indigo-50 text-indigo-700 ring-indigo-600/20">
-                    {data.statusDescription || data.status || 'Active'}
+                    {data.statusDescription || (data.status === 'O' ? 'Open (O)' : data.status || 'Active')}
                   </span>
                 </div>
 
@@ -143,6 +144,7 @@ export default function GrnDetailsModal({ grnId, isOpen, onClose }) {
                             <th className="px-3 py-2">Product Name</th>
                             <th className="px-3 py-2">Batch ID</th>
                             <th className="px-3 py-2">Batch</th>
+                            <th className="px-3 py-2">Batch Status</th>
                             <th className="px-3 py-2 text-right">Quantity</th>
                             <th className="px-3 py-2">Expiry Date</th>
                             <th className="px-3 py-2">Pack Size</th>
@@ -152,12 +154,23 @@ export default function GrnDetailsModal({ grnId, isOpen, onClose }) {
                         <tbody className="divide-y divide-slate-100 bg-white">
                           {data.items.map((item, idx) => (
                             <tr key={`${item.productId}-${item.batchId}-${idx}`} className="hover:bg-slate-50/80 transition">
-                              <td className="px-3 py-2 font-mono text-slate-700 font-medium">{item.productId || '-'}</td>
+                              <td className="px-3 py-2 font-mono">
+                                <ProductIdLink productId={item.productId} />
+                              </td>
                               <td className="px-3 py-2 font-medium text-slate-900 max-w-[180px] truncate" title={item.productName}>
                                 {item.productName || '-'}
                               </td>
                               <td className="px-3 py-2 font-mono text-slate-600">{item.batchId || '-'}</td>
                               <td className="px-3 py-2 font-mono text-slate-800 font-semibold">{item.batch || '-'}</td>
+                              <td className="px-3 py-2">
+                                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                                  item.status === 'O'
+                                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                                    : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                                }`}>
+                                  {item.statusDescription || (item.status === 'O' ? 'Open (O)' : item.status || '—')}
+                                </span>
+                              </td>
                               <td className="px-3 py-2 text-right font-mono font-semibold text-slate-900">
                                 {item.quantity != null ? item.quantity.toLocaleString() : '-'}
                               </td>
